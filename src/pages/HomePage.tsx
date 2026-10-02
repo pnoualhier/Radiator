@@ -58,8 +58,25 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const nearestMeas = nearestStation?.latest_measurement;
 
+  const isAnyDemo = stations.some(s => s.is_simulated || s.data_nature === 'DEMO');
+
   return (
     <div className="space-y-6 pb-20 md:pb-8">
+      {/* Demo Disclaimer Banner if running simulated data */}
+      {isAnyDemo && (
+        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-200 text-xs shadow-lg backdrop-blur-md flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="font-bold text-amber-300 uppercase tracking-wide text-[11px] font-mono flex items-center gap-1.5">
+              <span>Mode Démonstration Actif — Données simulées d'étalonnage</span>
+            </div>
+            <p className="text-slate-300 leading-relaxed">
+              En l'absence de flux ouvert temps réel certifié ASNR/Téléray, les valeurs affichées sont des <strong>estimations de référence géologique</strong> (fond granitique vs sédimentaire) et <strong>ne doivent pas être interprétées comme des télémesures certifiées en direct</strong>.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Hero Header */}
       <section className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900/90 via-slate-950 to-slate-950 p-6 md:p-8 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">

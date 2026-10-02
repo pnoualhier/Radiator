@@ -31,6 +31,8 @@ class NormalizedMeasurementRecord(BaseModel):
     measurement_type: str = "AMBIENT_GAMMA_DOSE_RATE"
     quality_status: str = "VALID"
     validation_status: str = "RAW"
+    data_nature: str = "LIVE"  # LIVE, CACHED, DEMO, UNAVAILABLE
+    is_simulated: bool = False
     metadata_json: Optional[str] = None
 
 

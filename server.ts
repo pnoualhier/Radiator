@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import http from 'http';
 import { createServer as createViteServer } from 'vite';
@@ -9,6 +10,8 @@ const __dirname = path.dirname(__filename);
 
 const PORT = 3000;
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'dev-secret-key-change-in-production';
+const IS_PROD = process.env.APP_ENV === 'production';
+const ALLOW_DEMO = process.env.ALLOW_DEMO_DATA === 'true';
 
 // Canonical in-memory benchmark data matching Python backend
 const SOURCES = [
@@ -67,7 +70,7 @@ const SOURCES = [
 ];
 
 // Baseline official & citizen stations across France
-const BENCHMARK_STATIONS = [
+const RAW_BENCHMARK_STATIONS = [
   { id: 1, external_id: 'TEL-75-PARIS', source_id: 1, source_code: 'TELERAY', source_name: 'Téléray / ASNR', name: 'Paris - Montsouris', latitude: 48.8217, longitude: 2.3378, altitude: 75, country: 'FR', region_code: 'IDF', department_code: '75', commune: 'Paris', station_type: 'FIXED', is_official: true, is_active: true, nominal: 85.0 },
   { id: 2, external_id: 'TEL-50-CHERBOURG', source_id: 1, source_code: 'TELERAY', source_name: 'Téléray / ASNR', name: 'Cherbourg-en-Cotentin', latitude: 49.6337, longitude: -1.6221, altitude: 15, country: 'FR', region_code: 'NOR', department_code: '50', commune: 'Cherbourg', station_type: 'FIXED', is_official: true, is_active: true, nominal: 92.0 },
   { id: 3, external_id: 'TEL-59-GRAVELINES', source_id: 1, source_code: 'TELERAY', source_name: 'Téléray / ASNR', name: 'Gravelines Littoral', latitude: 51.0150, longitude: 2.1280, altitude: 8, country: 'FR', region_code: 'HDF', department_code: '59', commune: 'Gravelines', station_type: 'FIXED', is_official: true, is_active: true, nominal: 78.0 },
@@ -89,8 +92,36 @@ const BENCHMARK_STATIONS = [
   { id: 18, external_id: 'ORAD-CIT-CLERMONT', source_id: 3, source_code: 'OPENRADIATION', source_name: 'OpenRadiation (Sciences Participatives)', name: 'Clermont-Ferrand Jaude (Station Citoyenne)', latitude: 45.7772, longitude: 3.0870, altitude: 360, country: 'FR', region_code: 'ARA', department_code: '63', commune: 'Clermont-Ferrand', station_type: 'CITIZEN', is_official: false, is_active: true, nominal: 135.0 },
 ];
 
+const BENCHMARK_STATIONS = RAW_BENCHMARK_STATIONS.map(s => ({
+  ...s,
+  data_nature: (IS_PROD && !ALLOW_DEMO) ? 'UNAVAILABLE' : 'DEMO',
+  is_simulated: !(IS_PROD && !ALLOW_DEMO),
+}));
+
 // Helper to generate realistic historical series for any station
 function generateStationMeasurements(stationId: number, nominal: number, hoursCount: number = 72) {
+  if (IS_PROD && !ALLOW_DEMO) {
+    // In production without certified live feed, suppress simulated data
+    return [{
+      id: stationId * 10000,
+      station_id: stationId,
+      source_id: stationId <= 16 ? 1 : 3,
+      external_id: `M-${stationId}-UNAVAILABLE`,
+      measured_at: new Date().toISOString(),
+      received_at: new Date().toISOString(),
+      value: 0,
+      unit: 'nSv/h',
+      measurement_type: 'AMBIENT_GAMMA_DOSE_RATE',
+      quality_status: 'MISSING',
+      validation_status: 'UNAVAILABLE',
+      data_nature: 'UNAVAILABLE',
+      is_simulated: false,
+      raw_value: 0,
+      raw_unit: 'nSv/h',
+      created_at: new Date().toISOString(),
+    }];
+  }
+
   const list = [];
   const now = Date.now();
   for (let h = hoursCount; h >= 0; h--) {
@@ -109,6 +140,8 @@ function generateStationMeasurements(stationId: number, nominal: number, hoursCo
       measurement_type: 'AMBIENT_GAMMA_DOSE_RATE',
       quality_status: 'VALID',
       validation_status: 'AUTO_VALIDATED',
+      data_nature: 'DEMO',
+      is_simulated: true,
       raw_value: val,
       raw_unit: 'nSv/h',
       created_at: t.toISOString(),
@@ -146,7 +179,8 @@ async function startServer() {
       status: 'ok',
       database: 'ok',
       version: '0.1.0',
-      environment: 'development',
+      environment: process.env.APP_ENV || 'production',
+      data_mode: (IS_PROD && !ALLOW_DEMO) ? 'PRODUCTION_STRICT_NO_DEMO' : 'DEMO_BENCHMARK',
     });
   });
 
@@ -252,9 +286,11 @@ async function startServer() {
         source_code: s.source_code,
         source_name: s.source_name,
         measured_at: latest?.measured_at || new Date().toISOString(),
-        value: latest?.value || s.nominal,
+        value: latest?.data_nature === 'UNAVAILABLE' ? 0 : (latest?.value ?? s.nominal),
         unit: 'nSv/h',
-        quality_status: 'VALID',
+        quality_status: latest?.quality_status || (s.data_nature === 'UNAVAILABLE' ? 'MISSING' : 'VALID'),
+        data_nature: latest?.data_nature || s.data_nature,
+        is_simulated: latest?.is_simulated ?? s.is_simulated,
         is_stale: false,
       };
     });

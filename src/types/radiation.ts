@@ -37,6 +37,8 @@ export interface Measurement {
   measurement_type: string;
   quality_status: 'VALID' | 'SUSPECT' | 'MISSING' | 'STALE' | 'INVALID';
   validation_status: string;
+  data_nature?: 'LIVE' | 'CACHED' | 'DEMO' | 'UNAVAILABLE';
+  is_simulated?: boolean;
   raw_value?: number;
   raw_unit?: string;
   metadata_json?: string;
@@ -58,6 +60,8 @@ export interface LatestMeasurement {
   unit: string;
   quality_status: 'VALID' | 'SUSPECT' | 'MISSING' | 'STALE' | 'INVALID';
   is_stale: boolean;
+  data_nature?: 'LIVE' | 'CACHED' | 'DEMO' | 'UNAVAILABLE';
+  is_simulated?: boolean;
 }
 
 export interface Station {
@@ -77,6 +81,8 @@ export interface Station {
   station_type: 'FIXED' | 'MOBILE' | 'CITIZEN' | 'OTHER';
   is_official: boolean;
   is_active: boolean;
+  data_nature?: 'LIVE' | 'CACHED' | 'DEMO' | 'UNAVAILABLE';
+  is_simulated?: boolean;
   last_seen_at?: string;
   created_at: string;
   updated_at: string;

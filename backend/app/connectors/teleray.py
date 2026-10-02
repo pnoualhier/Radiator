@@ -350,6 +350,8 @@ class TelerayConnector(RadiationSourceConnector):
                                 measurement_type="AMBIENT_GAMMA_DOSE_RATE",
                                 quality_status=quality_status,
                                 validation_status="AUTO_VALIDATED",
+                                data_nature="LIVE",
+                                is_simulated=False,
                             )
                         )
                     if results:
@@ -357,11 +359,16 @@ class TelerayConnector(RadiationSourceConnector):
         except Exception as e:
             logger.debug("Remote fetch_measurements fallback to benchmark: %s", str(e))
 
+        # In production, do NOT generate simulated data to prevent misleading radiological reporting
+        from app.config import settings
+        if settings.APP_ENV == "production":
+            logger.warning(
+                "Production mode active: Téléray live API unreachable, suppressing simulated DEMO data fallback."
+            )
+            return []
+
         # Generate realistic measurements for the benchmark stations
-        # Values reflect genuine natural French geological variations:
-        # Granite (Limoges ~140, Brest ~118, Ajaccio ~125), Sedimentary (Paris ~85, Bordeaux ~76)
-        import random
-        # Seeded determinism around benchmark values
+        # Tagged strictly as DEMO / is_simulated=True
         for b in TELERAY_BENCHMARK_STATIONS:
             if station_ids and b["external_id"] not in station_ids:
                 continue
@@ -390,7 +397,14 @@ class TelerayConnector(RadiationSourceConnector):
                     measurement_type="AMBIENT_GAMMA_DOSE_RATE",
                     quality_status=quality_status,
                     validation_status="AUTO_VALIDATED",
-                    metadata_json=json.dumps({"source": "Téléray", "sensor_type": "Geiger-Müller / Proportional counter"}),
+                    data_nature="DEMO",
+                    is_simulated=True,
+                    metadata_json=json.dumps({
+                        "source": "Téléray",
+                        "data_nature": "DEMO",
+                        "notice": "Valeur simulée à titre de démonstration géologique de référence",
+                        "sensor_type": "Geiger-Müller / Proportional counter"
+                    }),
                 )
             )
 

@@ -10,6 +10,8 @@ class MeasurementBase(BaseModel):
     measurement_type: str = "AMBIENT_GAMMA_DOSE_RATE"
     quality_status: str = "VALID"
     validation_status: str = "RAW"
+    data_nature: str = "LIVE"  # LIVE, CACHED, DEMO, UNAVAILABLE
+    is_simulated: bool = False
     raw_value: Optional[float] = None
     raw_unit: Optional[str] = None
 
@@ -39,6 +41,8 @@ class LatestMeasurement(BaseModel):
     value: float
     unit: str = "nSv/h"
     quality_status: str
+    data_nature: str = "LIVE"  # LIVE, CACHED, DEMO, UNAVAILABLE
+    is_simulated: bool = False
     is_stale: bool = False
 
     model_config = ConfigDict(from_attributes=True)

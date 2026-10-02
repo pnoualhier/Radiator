@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Index, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Index, Text, Boolean
 from sqlalchemy.orm import relationship
 from app.database.database import Base
 
@@ -22,6 +22,10 @@ class Measurement(Base):
     measurement_type = Column(String(50), default="AMBIENT_GAMMA_DOSE_RATE", nullable=False)  # AMBIENT_GAMMA_DOSE_RATE, AIRBORNE_RADIONUCLIDE, RADIONUCLIDE_CONCENTRATION, OTHER
     quality_status = Column(String(20), default="VALID", nullable=False, index=True)  # VALID, SUSPECT, MISSING, STALE, INVALID
     validation_status = Column(String(20), default="RAW", nullable=False)  # RAW, AUTO_VALIDATED, EXPERT_VALIDATED
+
+    # Rigorous data provenance distinction (LIVE / CACHED / DEMO / UNAVAILABLE)
+    data_nature = Column(String(20), default="LIVE", nullable=False, index=True)
+    is_simulated = Column(Boolean, default=False, nullable=False)
 
     # Preserved original input data
     raw_value = Column(Float, nullable=True)

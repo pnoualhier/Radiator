@@ -151,6 +151,16 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
                         Citoyen
                       </span>
                     )}
+
+                    {station.is_simulated || station.data_nature === 'DEMO' ? (
+                      <span className="text-[10px] font-medium bg-amber-950/80 border border-amber-700/60 text-amber-300 px-1.5 py-0.2 rounded">
+                        Simulé
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 px-1.5 py-0.2 rounded">
+                        Réel
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-1">

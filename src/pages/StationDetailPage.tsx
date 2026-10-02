@@ -154,6 +154,8 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
             value={val}
             unit={latest?.unit || 'nSv/h'}
             isOfficial={station.is_official}
+            dataNature={latest?.data_nature || station.data_nature}
+            isSimulated={latest?.is_simulated ?? station.is_simulated}
           />
         </div>
 
@@ -172,6 +174,19 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
                     minute: '2-digit',
                   })
                 : 'Non communiqué'}
+            </div>
+          </div>
+
+          <div className="border-t border-slate-800 pt-2">
+            <span className="text-[11px] font-mono uppercase text-slate-500">Nature de la donnée</span>
+            <div className="font-mono text-xs font-semibold mt-0.5">
+              {latest?.is_simulated || station.is_simulated || latest?.data_nature === 'DEMO' ? (
+                <span className="text-amber-400">🟠 Donnée simulée (Mode Démo)</span>
+              ) : latest?.data_nature === 'CACHED' ? (
+                <span className="text-sky-400">🔵 Donnée réelle archivée</span>
+              ) : (
+                <span className="text-emerald-400">🟢 Donnée réelle en direct</span>
+              )}
             </div>
           </div>
 

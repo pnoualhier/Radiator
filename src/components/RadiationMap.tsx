@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import type { Station } from '../types/radiation';
-import { Navigation2, Layers, ShieldCheck, Users, ExternalLink, Calendar, Radio } from 'lucide-react';
+import { Navigation2, Layers, ShieldCheck, Users, ExternalLink, Calendar, Radio, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 
 interface RadiationMapProps {
   stations: Station[];
@@ -14,7 +14,12 @@ interface RadiationMapProps {
 }
 
 // Marker icon generator using clean SVG
-function createMarkerIcon(value: number | undefined, isOfficial: boolean) {
+function createMarkerIcon(
+  value: number | undefined,
+  isOfficial: boolean,
+  dataNature?: string,
+  isSimulated?: boolean
+) {
   let color = '#38bdf8'; // sky (standard)
   let bg = '#0369a1';
 
@@ -31,13 +36,22 @@ function createMarkerIcon(value: number | undefined, isOfficial: boolean) {
     }
   }
 
-  const border = isOfficial ? 'border: 2px solid white;' : 'border: 2px dashed #a855f7;';
+  const isDemo = isSimulated || dataNature === 'DEMO';
+  const border = isDemo
+    ? 'border: 2px dashed #f59e0b;'
+    : isOfficial
+    ? 'border: 2px solid white;'
+    : 'border: 2px dashed #a855f7;';
   const valText = value !== undefined ? Math.round(value) : '?';
+  const demoBadge = isDemo
+    ? `<span style="position: absolute; top: -5px; right: -5px; background: #f59e0b; color: #000; font-size: 8px; font-weight: bold; width: 13px; height: 13px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #0f172a;">D</span>`
+    : '';
 
   return L.divIcon({
     className: 'custom-radiation-marker',
     html: `
       <div style="
+        position: relative;
         background: ${bg};
         color: #ffffff;
         width: 32px;
@@ -53,6 +67,7 @@ function createMarkerIcon(value: number | undefined, isOfficial: boolean) {
         ${border}
       ">
         ${valText}
+        ${demoBadge}
       </div>
     `,
     iconSize: [32, 32],
@@ -145,7 +160,8 @@ export const RadiationMap: React.FC<RadiationMapProps> = ({
         {filteredStations.map(station => {
           const latest = station.latest_measurement;
           const val = latest?.value;
-          const icon = createMarkerIcon(val, station.is_official);
+          const isDemo = station.is_simulated || station.data_nature === 'DEMO' || latest?.is_simulated || latest?.data_nature === 'DEMO';
+          const icon = createMarkerIcon(val, station.is_official, station.data_nature || latest?.data_nature, isDemo);
 
           const formattedTime = latest?.measured_at
             ? new Date(latest.measured_at).toLocaleString('fr-FR', {
@@ -164,7 +180,7 @@ export const RadiationMap: React.FC<RadiationMapProps> = ({
               icon={icon}
             >
               <Popup className="radiation-popup">
-                <div className="p-1 min-w-[210px] text-slate-900 font-sans">
+                <div className="p-1 min-w-[220px] text-slate-900 font-sans">
                   <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-1.5 mb-1.5">
                     <span className="font-bold text-sm text-slate-900 line-clamp-1">
                       {station.name}
@@ -180,8 +196,26 @@ export const RadiationMap: React.FC<RadiationMapProps> = ({
                     )}
                   </div>
 
+                  {/* Provenance Banner in Popup */}
+                  {isDemo ? (
+                    <div className="mb-2 px-2 py-1 rounded bg-amber-50 border border-amber-300 text-amber-900 text-[10px] font-medium flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span><strong>Mode Démo :</strong> Donnée simulée de référence</span>
+                    </div>
+                  ) : latest?.data_nature === 'CACHED' ? (
+                    <div className="mb-2 px-2 py-1 rounded bg-sky-50 border border-sky-300 text-sky-900 text-[10px] font-medium flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                      <span><strong>Donnée réelle archivée</strong></span>
+                    </div>
+                  ) : (
+                    <div className="mb-2 px-2 py-1 rounded bg-emerald-50 border border-emerald-300 text-emerald-900 text-[10px] font-medium flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span><strong>Donnée réelle en direct</strong></span>
+                    </div>
+                  )}
+
                   <div className="my-2 bg-slate-50 p-2 rounded border border-slate-100 text-center">
-                    <div className="text-[11px] text-slate-500 font-medium">Dernière mesure</div>
+                    <div className="text-[11px] text-slate-500 font-medium">Débit de dose mesuré</div>
                     <div className="text-2xl font-mono font-bold text-slate-900 mt-0.5">
                       {val !== undefined ? val.toFixed(1) : '—'}{' '}
                       <span className="text-xs font-normal text-slate-600">nSv/h</span>

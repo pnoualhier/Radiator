@@ -170,6 +170,8 @@ async def sync_source(source_code: str, db: Session) -> SyncRun:
                 measurement_type=m_rec.measurement_type,
                 quality_status=m_rec.quality_status,
                 validation_status=m_rec.validation_status,
+                data_nature=m_rec.data_nature,
+                is_simulated=m_rec.is_simulated,
                 raw_value=m_rec.raw_value,
                 raw_unit=m_rec.raw_unit,
                 metadata_json=m_rec.metadata_json,
