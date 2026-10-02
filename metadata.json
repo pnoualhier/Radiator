@@ -1,0 +1,6 @@
+{
+  "name": "Radiation France — Surveillance Radiologique",
+  "description": "PWA de surveillance de la radioactivité environnementale en France métropolitaine et Corse (données Téléray/ASNR-IRSN, EURDEP, OpenRadiation, Safecast).",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
