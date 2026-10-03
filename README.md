@@ -84,6 +84,17 @@ Couvre :
 
 ---
 
+## Sources et Connecteurs Intégrés (4 Réseaux Actifs)
+
+L'application exploite et normalise en temps réel les données de 4 réseaux radiologiques distincts :
+
+1. **Téléray (ASNR / IRSN)** : Réseau institutionnel national officiel de surveillance continue en France (plus de 400 sondes permanentes). Débit de dose gamma ambiant en `nSv/h`.
+2. **OpenRadiation (IRSN / Sorbonne Université / ANCCLI)** : Réseau participatif citoyen alimenté en direct via l'API REST `https://request.openradiation.net/measurements` (conversion automatique `µSv/h -> nSv/h`).
+3. **EURDEP (Commission Européenne / DG JRC)** : Plateforme européenne d'échange de données radiologiques assurant la surveillance transfrontalière autour des frontières françaises (Allemagne BfS, Belgique FANC, Suisse ENSI, Espagne CSN, Luxembourg, Italie ISPRA).
+4. **Safecast (Réseau citoyen mondial ouvert)** : Capteurs mobiles et fixes bGeigie Nano connectés via l'API `https://api.safecast.org`, convertis de CPM (Counts Per Minute) en `nSv/h` via le facteur d'étalonnage standard pancake GM tube (`334 CPM = 1 µSv/h`).
+
+---
+
 ## Endpoints de l'API (`/api/v1`)
 
 | Méthode | Endpoint | Description |

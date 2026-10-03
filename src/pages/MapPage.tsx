@@ -46,13 +46,25 @@ export const MapPage: React.FC<MapPageProps> = ({
                 <span className="text-lg font-bold text-white font-mono">
                   {selectedStation.name}
                 </span>
-                {selectedStation.is_official ? (
+                {selectedStation.source_code === 'OPERA_AIR' ? (
+                  <span className="flex items-center gap-1 rounded bg-teal-950/80 border border-teal-700 text-teal-300 px-2 py-0.5 text-xs font-semibold">
+                    💨 OPERA-Air
+                  </span>
+                ) : selectedStation.source_code === 'HYDROTELERAY' ? (
+                  <span className="flex items-center gap-1 rounded bg-cyan-950/80 border border-cyan-700 text-cyan-300 px-2 py-0.5 text-xs font-semibold">
+                    💧 HydroTéléray
+                  </span>
+                ) : selectedStation.source_code === 'TELERAY' ? (
                   <span className="flex items-center gap-1 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 px-2 py-0.5 text-xs font-semibold">
                     <ShieldCheck className="w-3.5 h-3.5" /> Téléray
                   </span>
-                ) : (
+                ) : selectedStation.source_code === 'OPENRADIATION' ? (
                   <span className="flex items-center gap-1 rounded bg-purple-950/80 border border-purple-800 text-purple-400 px-2 py-0.5 text-xs font-semibold">
-                    <Users className="w-3.5 h-3.5" /> Citoyen
+                    <Users className="w-3.5 h-3.5" /> Participatif
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 rounded bg-sky-950/80 border border-sky-800 text-sky-400 px-2 py-0.5 text-xs font-semibold">
+                    🌐 {selectedStation.source_name || selectedStation.source_code}
                   </span>
                 )}
               </div>
@@ -63,6 +75,11 @@ export const MapPage: React.FC<MapPageProps> = ({
                   {selectedStation.commune || 'Localisation métropolitaine'}
                   {selectedStation.department_code && ` (${selectedStation.department_code})`}
                 </span>
+                {selectedStation.radionuclide_focus && (
+                  <span className="text-amber-400/90 font-mono text-[11px]">
+                    Cible : {selectedStation.radionuclide_focus}
+                  </span>
+                )}
                 {selectedStation.latest_measurement && (
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5 text-slate-500" />
@@ -81,10 +98,20 @@ export const MapPage: React.FC<MapPageProps> = ({
             <div className="flex items-center gap-4">
               {selectedStation.latest_measurement && (
                 <div className="text-right">
-                  <div className="text-[10px] uppercase font-mono text-slate-500">Dernière mesure</div>
+                  <div className="text-[10px] uppercase font-mono text-slate-500">
+                    {selectedStation.measurement_type === 'ATMOSPHERIC_AEROSOLS'
+                      ? 'Concentration volumique'
+                      : selectedStation.measurement_type === 'WATER_RADIOACTIVITY'
+                      ? "Activité volumique eau"
+                      : 'Dernière mesure'}
+                  </div>
                   <div className="font-mono text-2xl font-bold text-amber-400">
-                    {selectedStation.latest_measurement.value.toFixed(1)}{' '}
-                    <span className="text-xs font-normal text-slate-400">nSv/h</span>
+                    {selectedStation.latest_measurement.value < 1
+                      ? selectedStation.latest_measurement.value.toFixed(2)
+                      : selectedStation.latest_measurement.value.toFixed(1)}{' '}
+                    <span className="text-xs font-normal text-slate-400">
+                      {selectedStation.latest_measurement.unit || selectedStation.unit || 'nSv/h'}
+                    </span>
                   </div>
                 </div>
               )}

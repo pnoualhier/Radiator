@@ -7,7 +7,9 @@ import type {
   Source,
   OfficialAlert,
   SourceHealth,
+  MeasurementTypeInfo,
 } from '../types/radiation';
+import { MEASUREMENT_TYPES_CATALOG } from '../types/radiation';
 import { db } from '../offline/db';
 
 const BASE_URL = '/api/v1';
@@ -54,6 +56,7 @@ export class ApiService {
   // 1. Stations
   static async getStations(params?: {
     source?: string;
+    measurement_type?: string;
     region?: string;
     department?: string;
     bbox?: string;
@@ -65,6 +68,7 @@ export class ApiService {
   }): Promise<ApiResponse<Station[]>> {
     const query = new URLSearchParams();
     if (params?.source) query.set('source', params.source);
+    if (params?.measurement_type) query.set('measurement_type', params.measurement_type);
     if (params?.region) query.set('region', params.region);
     if (params?.department) query.set('department', params.department);
     if (params?.bbox) query.set('bbox', params.bbox);
@@ -83,12 +87,26 @@ export class ApiService {
         if (params?.official !== undefined) {
           list = list.filter(s => s.is_official === params.official);
         }
+        if (params?.measurement_type) {
+          list = list.filter(s => s.measurement_type === params.measurement_type);
+        }
         return list;
       },
       async (stations: Station[]) => {
         await db.stations.bulkPut(stations);
       }
     );
+  }
+
+  // 1b. Measurement Types
+  static async getMeasurementTypes(): Promise<MeasurementTypeInfo[]> {
+    try {
+      const res = await fetch(`${BASE_URL}/measurement-types`);
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('Failed to fetch measurement types, using offline catalog:', err);
+    }
+    return Object.values(MEASUREMENT_TYPES_CATALOG);
   }
 
   // 2. Station Detail

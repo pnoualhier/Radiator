@@ -117,13 +117,25 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
               <h1 className="text-2xl font-bold tracking-tight text-white font-mono">
                 {station.name}
               </h1>
-              {station.is_official ? (
-                <span className="flex items-center gap-1 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 px-2 py-0.5 text-xs font-semibold">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Téléray / ASNR
+              {station.source_code === 'OPERA_AIR' ? (
+                <span className="flex items-center gap-1 rounded bg-teal-950/80 border border-teal-800 text-teal-300 px-2.5 py-0.5 text-xs font-semibold">
+                  💨 🟢 Institutionnel (OPERA-Air / IRSN)
+                </span>
+              ) : station.source_code === 'HYDROTELERAY' ? (
+                <span className="flex items-center gap-1 rounded bg-cyan-950/80 border border-cyan-800 text-cyan-300 px-2.5 py-0.5 text-xs font-semibold">
+                  💧 🟢 Institutionnel (HydroTéléray / IRSN)
+                </span>
+              ) : station.source_code === 'TELERAY' ? (
+                <span className="flex items-center gap-1 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400 px-2.5 py-0.5 text-xs font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5" /> 🟢 Institutionnel (Téléray / ASNR)
+                </span>
+              ) : station.source_code === 'OPENRADIATION' ? (
+                <span className="flex items-center gap-1 rounded bg-purple-950/80 border border-purple-800 text-purple-400 px-2.5 py-0.5 text-xs font-semibold">
+                  <Users className="w-3.5 h-3.5" /> 🟣 Participatif (OpenRadiation)
                 </span>
               ) : (
-                <span className="flex items-center gap-1 rounded bg-purple-950/80 border border-purple-800 text-purple-400 px-2 py-0.5 text-xs font-semibold">
-                  <Users className="w-3.5 h-3.5" /> Réseau Citoyen
+                <span className="flex items-center gap-1 rounded bg-sky-950/80 border border-sky-800 text-sky-400 px-2.5 py-0.5 text-xs font-semibold">
+                  <Radio className="w-3.5 h-3.5" /> 🔵 International ({station.source_name || station.source_code})
                 </span>
               )}
             </div>
@@ -146,6 +158,179 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Dedicated Tier Context Cards */}
+      {station.source_code === 'OPENRADIATION' && (
+        <div className="rounded-2xl border border-purple-800/60 bg-gradient-to-r from-purple-950/50 via-slate-900/70 to-purple-950/30 p-5 shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-purple-800/40 pb-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <span>OPENRADIATION — SCIENCES PARTICIPATIVES</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-semibold">
+                    Capteur Citoyen
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Projet partenarial copiloté par l'<strong>IRSN</strong>, <strong>Sorbonne Université</strong>, l'<strong>ANCCLI</strong> et les FabLabs.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {station.openradiation_meta?.public_url && (
+                <a
+                  href={station.openradiation_meta.public_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow transition"
+                >
+                  <span>Fiche OpenRadiation.org</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+              <a
+                href="https://openradiation.org/fr/data"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition"
+              >
+                <span>Données Open Data</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+              <span className="text-slate-400 block text-[10px] uppercase font-sans">Débit Brut Mesuré</span>
+              <span className="text-purple-300 font-bold text-sm">
+                {station.openradiation_meta?.raw_usvh
+                  ? `${station.openradiation_meta.raw_usvh.toFixed(4)} µSv/h`
+                  : latest?.raw_value
+                  ? `${Number(latest.raw_value).toFixed(4)} µSv/h`
+                  : `${(val / 1000).toFixed(4)} µSv/h`}
+              </span>
+            </div>
+
+            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+              <span className="text-slate-400 block text-[10px] uppercase font-sans">Débit Normalisé</span>
+              <span className="text-emerald-400 font-bold text-sm">
+                {val.toFixed(1)} nSv/h
+              </span>
+            </div>
+
+            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+              <span className="text-slate-400 block text-[10px] uppercase font-sans">Milieu de Mesure</span>
+              <span className="text-white font-bold text-sm capitalize">
+                {station.openradiation_meta?.qualification === 'groundlevel'
+                  ? 'Au sol (extérieur)'
+                  : station.openradiation_meta?.qualification === 'indoor'
+                  ? 'En intérieur'
+                  : station.openradiation_meta?.qualification || 'Ambiance'}
+              </span>
+            </div>
+
+            <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+              <span className="text-slate-400 block text-[10px] uppercase font-sans">Statut Mesure</span>
+              <span className="font-bold text-sm flex items-center gap-1">
+                {station.openradiation_meta?.atypical ? (
+                  <span className="text-amber-400">⚠️ Atypique</span>
+                ) : (
+                  <span className="text-emerald-400">✅ Standard</span>
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {station.source_code === 'TELERAY' && (
+        <div className="rounded-2xl border border-emerald-800/60 bg-gradient-to-r from-emerald-950/40 via-slate-900/60 to-emerald-950/20 p-4 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-bold text-white font-mono flex items-center gap-2">
+                <span>RÉSEAU INSTITUTIONNEL NATIONAL — TÉLÉRAY (ASNR / IRSN)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Surveillance d'État
+                </span>
+              </div>
+              <p className="text-slate-400 text-[11px] mt-0.5">
+                Sonde gamma d'ambiance fixe opérée 24h/24 par l'Autorité de Sûreté Nucléaire et Radioprotection (ASNR / IRSN). Donnée télémétrique certifiée de référence territoriale.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {station.source_code === 'OPERA_AIR' && (
+        <div className="rounded-2xl border border-teal-800/60 bg-gradient-to-r from-teal-950/40 via-slate-900/60 to-teal-950/20 p-4 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-teal-600/20 border border-teal-500/40 flex items-center justify-center text-teal-400 shrink-0">
+              <Layers className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-bold text-white font-mono flex items-center gap-2">
+                <span>RÉSEAU DE SURVEILLANCE ATMOSPHÉRIQUE — OPERA-AIR (IRSN)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                  Aérosols & Poussières
+                </span>
+              </div>
+              <p className="text-slate-400 text-[11px] mt-0.5">
+                Station de prélèvement d'air à très grand débit (100 à 700 m³/h) sur filtre fixe. Permet la détection de traces infimes d'aérosols radioactifs (Césium-137, Iode-131, Béryllium-7 naturel) par spectrométrie gamma différée en laboratoire de métrologie nucléaire. Distinct d'un dosimètre Téléray.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {station.source_code === 'HYDROTELERAY' && (
+        <div className="rounded-2xl border border-cyan-800/60 bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-cyan-950/20 p-4 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-cyan-600/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0">
+              <Activity className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-bold text-white font-mono flex items-center gap-2">
+                <span>RÉSEAU HYDROLOGIQUE CONTINU — HYDROTÉLÉRAY (IRSN)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  Eaux Fluviales
+                </span>
+              </div>
+              <p className="text-slate-400 text-[11px] mt-0.5">
+                Surveillance continue de la radioactivité dans les grands fleuves français (Rhône, Seine, Loire, Garonne, Rhin, Meuse, Moselle) en aval des centres nucléaires de production d'électricité (CNPE). Mesure directe de l'activité volumique en Becquerels par litre (Bq/L) ciblant notamment le Tritium (H-3) et les émetteurs gamma solubles.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {station.source_code === 'EURDEP' && (
+        <div className="rounded-2xl border border-sky-800/60 bg-gradient-to-r from-sky-950/40 via-slate-900/60 to-sky-950/20 p-4 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-sky-600/20 border border-sky-500/40 flex items-center justify-center text-sky-400 shrink-0">
+              <Radio className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-bold text-white font-mono flex items-center gap-2">
+                <span>SURVEILLANCE TRANSFRONTALIÈRE EUROPÉENNE — EURDEP (JRC)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                  Commission Européenne
+                </span>
+              </div>
+              <p className="text-slate-400 text-[11px] mt-0.5">
+                Plateforme d'échange de données radiologiques de la Commission Européenne reliant les autorités nationales de sûreté frontalières (Allemagne BfS, Suisse ENSI, Belgique FANC, Espagne CSN, Luxembourg, Italie ISPRA).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Gauge and Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -222,8 +407,14 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
             <thead>
               <tr className="border-b border-slate-800 text-slate-500 uppercase text-[10px]">
                 <th className="pb-2">Date & Heure</th>
-                <th className="pb-2">Valeur (nSv/h)</th>
-                <th className="pb-2">Équivalent µSv/h</th>
+                <th className="pb-2">Valeur ({latest?.unit || station.unit || 'nSv/h'})</th>
+                <th className="pb-2">
+                  {station.measurement_type === 'ATMOSPHERIC_AEROSOLS'
+                    ? 'Nucléide analysé'
+                    : station.measurement_type === 'WATER_RADIOACTIVITY'
+                    ? 'Vecteur hydrologique'
+                    : 'Équivalent µSv/h'}
+                </th>
                 <th className="pb-2">Qualité</th>
                 <th className="pb-2">Validation</th>
               </tr>
@@ -240,10 +431,16 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
                     })}
                   </td>
                   <td className="py-2 font-bold text-amber-300">
-                    {m.value.toFixed(1)} {m.unit}
+                    {m.value < 1 ? m.value.toFixed(2) : m.value.toFixed(1)} {m.unit}
                   </td>
                   <td className="py-2 text-slate-400">
-                    {(m.value / 1000).toFixed(3)} µSv/h
+                    {station.measurement_type === 'ATMOSPHERIC_AEROSOLS' ? (
+                      <span className="text-teal-300 font-semibold">{station.radionuclide_focus || 'Cs-137'}</span>
+                    ) : station.measurement_type === 'WATER_RADIOACTIVITY' ? (
+                      <span className="text-cyan-300 font-semibold">{station.radionuclide_focus || 'Tritium (H-3)'}</span>
+                    ) : (
+                      `${(m.value / 1000).toFixed(3)} µSv/h`
+                    )}
                   </td>
                   <td className="py-2">
                     <span className="rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 text-[10px]">

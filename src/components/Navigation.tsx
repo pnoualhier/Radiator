@@ -1,7 +1,7 @@
 import React from 'react';
-import { Home, Map, Radio, AlertTriangle, BookOpen, Database } from 'lucide-react';
+import { Home, Map, Radio, AlertTriangle, BookOpen, Database, Layers } from 'lucide-react';
 
-export type NavTab = 'home' | 'map' | 'stations' | 'alerts' | 'info' | 'sources';
+export type NavTab = 'home' | 'map' | 'stations' | 'types' | 'alerts' | 'sources' | 'info';
 
 interface NavigationProps {
   currentTab: NavTab;
@@ -18,6 +18,7 @@ export const Navigation: React.FC<NavigationProps> = ({
     { id: 'home' as NavTab, label: 'Accueil', icon: Home },
     { id: 'map' as NavTab, label: 'Carte', icon: Map },
     { id: 'stations' as NavTab, label: 'Stations', icon: Radio },
+    { id: 'types' as NavTab, label: 'Types de mesure', icon: Layers },
     {
       id: 'alerts' as NavTab,
       label: 'Alertes',
@@ -40,7 +41,7 @@ export const Navigation: React.FC<NavigationProps> = ({
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition relative ${
+                className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition relative ${
                   isActive
                     ? 'bg-amber-500 text-slate-950 shadow-sm'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -60,8 +61,8 @@ export const Navigation: React.FC<NavigationProps> = ({
       </nav>
 
       {/* Mobile Navigation Bottom Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-slate-800/80 bg-slate-950/95 backdrop-blur-lg px-2 py-1.5 safe-area-inset-bottom">
-        <div className="grid grid-cols-6 gap-1">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-slate-800/80 bg-slate-950/95 backdrop-blur-lg px-1.5 py-1 safe-area-inset-bottom">
+        <div className="grid grid-cols-7 gap-0.5">
           {tabs.map(tab => {
             const Icon = tab.icon;
             const isActive = currentTab === tab.id;
@@ -78,11 +79,11 @@ export const Navigation: React.FC<NavigationProps> = ({
                 <div className={`p-1 rounded-lg ${isActive ? 'bg-amber-500/10' : ''}`}>
                   <Icon className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] font-medium tracking-tight mt-0.5">
-                  {tab.label}
+                <span className="text-[9px] font-medium tracking-tight mt-0.5 truncate max-w-full px-0.5">
+                  {tab.id === 'types' ? 'Mesures' : tab.label}
                 </span>
                 {tab.badge !== undefined && (
-                  <span className="absolute top-1 right-2 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-600 text-[8px] font-bold text-white">
+                  <span className="absolute top-1 right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-600 text-[7px] font-bold text-white">
                     {tab.badge}
                   </span>
                 )}

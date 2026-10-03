@@ -21,6 +21,7 @@ import { StationDetailPage } from './pages/StationDetailPage';
 import { AlertsPage } from './pages/AlertsPage';
 import { SourcesPage } from './pages/SourcesPage';
 import { InfoPage } from './pages/InfoPage';
+import { MeasurementTypesPage } from './pages/MeasurementTypesPage';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
@@ -162,6 +163,14 @@ export default function App() {
                 stations={stations}
                 onSelectStation={handleSelectStation}
                 userCoords={userCoords}
+              />
+            )}
+
+            {currentTab === 'types' && (
+              <MeasurementTypesPage
+                stations={stations}
+                onTabChange={handleTabChange}
+                onSelectStation={handleSelectStation}
               />
             )}
 

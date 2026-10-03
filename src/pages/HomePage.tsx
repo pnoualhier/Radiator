@@ -195,8 +195,8 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         </div>
 
-        {/* Quick Action Navigation Grid (Required Section 15 & 46) */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Quick Action Navigation Grid */}
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
           <button
             onClick={() => onTabChange('map')}
             className="group flex flex-col items-start p-4 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-800/80 transition text-left shadow"
@@ -208,7 +208,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               Voir la carte
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
-              Explorer les balises sur toute la France
+              Explorer les balises géolocalisées
             </div>
           </button>
 
@@ -223,7 +223,22 @@ export const HomePage: React.FC<HomePageProps> = ({
               Stations
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
-              {stations.length} stations enregistrées
+              {stations.length} stations répertoriées
+            </div>
+          </button>
+
+          <button
+            onClick={() => onTabChange('types')}
+            className="group flex flex-col items-start p-4 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-teal-500/50 hover:bg-slate-800/80 transition text-left shadow"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500/10 text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-950 transition">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div className="mt-3 text-sm font-bold text-white group-hover:text-teal-300 transition">
+              Types de mesure
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Dose vs Aérosols vs Eaux
             </div>
           </button>
 
@@ -235,10 +250,10 @@ export const HomePage: React.FC<HomePageProps> = ({
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div className="mt-3 text-sm font-bold text-white group-hover:text-red-300 transition">
-              Alertes officielles
+              Alertes
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
-              Communications des autorités
+              Communications de crise
             </div>
           </button>
 
@@ -253,50 +268,50 @@ export const HomePage: React.FC<HomePageProps> = ({
               Comprendre
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
-              Unités nSv/h, normes et rayonnements
+              Unités nSv/h et normes
             </div>
           </button>
         </div>
       </section>
 
-      {/* Network Overview Cards */}
+      {/* Network Overview Cards: The 3 Pillars Architecture */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Réseau Institutionnel Téléray</span>
+        <div className="rounded-2xl border border-emerald-800/60 bg-emerald-950/20 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span>🟢 Pôle Institutionnel</span>
           </div>
           <div className="mt-2 text-2xl font-mono font-bold text-white">
-            {officialCount} balises
+            {stations.filter(s => s.source_code === 'TELERAY' || s.source_code === 'OPERA_AIR' || s.source_code === 'HYDROTELERAY').length} stations d'État
           </div>
-          <p className="mt-1 text-xs text-slate-400">
-            Exploité par l'ASNR (IRSN). Balises gamma permanentes de haute précision réparties sur le territoire national.
+          <p className="mt-1 text-xs text-slate-300">
+            <strong>ASNR / IRSN</strong> : Réseau multi-vecteurs combinant <strong>Téléray</strong> (débit gamma), <strong>OPERA-Air</strong> (aérosols en µBq/m³) et <strong>HydroTéléray</strong> (eaux en Bq/L).
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-purple-400">
-            <Layers className="w-4 h-4" />
-            <span>Sciences Participatives</span>
+        <div className="rounded-2xl border border-purple-800/60 bg-purple-950/20 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 font-mono">
+            <span className="w-2 h-2 rounded-full bg-purple-400" />
+            <span>🟣 Pôle Participatif</span>
           </div>
           <div className="mt-2 text-2xl font-mono font-bold text-white">
-            {citizenCount} capteurs
+            {stations.filter(s => s.source_code === 'OPENRADIATION').length} capteurs citoyens
           </div>
-          <p className="mt-1 text-xs text-slate-400">
-            OpenRadiation & Safecast. Données collaboratives recueillies par des citoyens équipés de dosimètres étalonnés.
+          <p className="mt-1 text-xs text-slate-300">
+            <strong>OpenRadiation</strong> : Sciences citoyennes en direct (IRSN, Sorbonne, ANCCLI), mesures en µSv/h normalisées.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-amber-400">
-            <Activity className="w-4 h-4" />
-            <span>Fond Radiologique Moyen</span>
+        <div className="rounded-2xl border border-sky-800/60 bg-sky-950/20 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-sky-400 font-mono">
+            <span className="w-2 h-2 rounded-full bg-sky-400" />
+            <span>🔵 Pôle International</span>
           </div>
           <div className="mt-2 text-2xl font-mono font-bold text-white">
-            {avgNational.toFixed(1)} nSv/h
+            {stations.filter(s => s.source_code === 'EURDEP' || s.source_code === 'SAFECAST').length} stations transfrontalières
           </div>
-          <p className="mt-1 text-xs text-slate-400">
-            Moyenne nationale en direct. Les variations s'expliquent naturellement par la nature géologique des sols (granite vs calcaire).
+          <p className="mt-1 text-xs text-slate-300">
+            <strong>EURDEP (JRC UE) & Safecast</strong> : Surveillance transfrontalière européenne et open data mondiale.
           </p>
         </div>
       </section>
