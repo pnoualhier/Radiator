@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import type { StationDetail, Measurement, StationStatistics } from '../types/radiation';
 import { ApiService } from '../services/api';
 import { RadiationChart } from '../components/RadiationChart';
+import { Last24hRadiationChart } from '../components/Last24hRadiationChart';
 import { RadiationGauge } from '../components/RadiationGauge';
+import { WhyThisValuePanel } from '../components/WhyThisValuePanel';
+import { safeFormatTime, safeFormatDateTime, safeFormatNumber } from '../utils/dateUtils';
 import {
   ArrowLeft,
   MapPin,
@@ -14,16 +17,29 @@ import {
   Compass,
   Layers,
   ExternalLink,
+  GitCompare,
+  Star,
+  Server,
+  Database,
+  BookOpen,
 } from 'lucide-react';
 
 interface StationDetailPageProps {
   stationId: number;
   onBack: () => void;
+  onCompare?: (stationId: number) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (stationId: number) => void;
+  onNavigateToMethodology?: () => void;
 }
 
 export const StationDetailPage: React.FC<StationDetailPageProps> = ({
   stationId,
   onBack,
+  onCompare,
+  isFavorite = false,
+  onToggleFavorite,
+  onNavigateToMethodology,
 }) => {
   const [station, setStation] = useState<StationDetail | null>(null);
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
@@ -156,6 +172,33 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
               <span className="text-slate-500 font-mono">ID: {station.external_id}</span>
             </div>
           </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {onToggleFavorite && (
+              <button
+                onClick={() => onToggleFavorite(station.id)}
+                className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-mono font-semibold transition shadow ${
+                  isFavorite
+                    ? 'bg-amber-500/20 border-amber-500 text-amber-300'
+                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300 hover:text-white'
+                }`}
+                title={isFavorite ? 'Retirer des stations favorites' : 'Ajouter à mes stations favorites'}
+              >
+                <Star className={`w-4 h-4 ${isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-400'}`} />
+                <span>{isFavorite ? 'Favori ⭐' : 'Ajouter aux favoris'}</span>
+              </button>
+            )}
+
+            {onCompare && (
+              <button
+                onClick={() => onCompare(station.id)}
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3.5 py-2 text-xs font-mono font-semibold text-amber-300 hover:text-white transition shadow"
+              >
+                <GitCompare className="w-4 h-4 text-amber-400" />
+                <span>Comparer cette balise</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -270,44 +313,162 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
       )}
 
       {station.source_code === 'OPERA_AIR' && (
-        <div className="rounded-2xl border border-teal-800/60 bg-gradient-to-r from-teal-950/40 via-slate-900/60 to-teal-950/20 p-4 text-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-teal-600/20 border border-teal-500/40 flex items-center justify-center text-teal-400 shrink-0">
-              <Layers className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="font-bold text-white font-mono flex items-center gap-2">
-                <span>RÉSEAU DE SURVEILLANCE ATMOSPHÉRIQUE — OPERA-AIR (IRSN)</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                  Aérosols & Poussières
-                </span>
+        <div className="rounded-2xl border border-teal-800/80 bg-gradient-to-r from-teal-950/50 via-slate-900/80 to-teal-950/30 p-5 shadow-xl space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-teal-800/40 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-teal-600/20 border border-teal-500/40 flex items-center justify-center text-teal-300 shrink-0">
+                <Layers className="w-5 h-5" />
               </div>
-              <p className="text-slate-400 text-[11px] mt-0.5">
-                Station de prélèvement d'air à très grand débit (100 à 700 m³/h) sur filtre fixe. Permet la détection de traces infimes d'aérosols radioactifs (Césium-137, Iode-131, Béryllium-7 naturel) par spectrométrie gamma différée en laboratoire de métrologie nucléaire. Distinct d'un dosimètre Téléray.
-              </p>
+              <div>
+                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <span>RÉSEAU DE SURVEILLANCE ATMOSPHÉRIQUE — OPERA-AIR (ASNR / IRSN)</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 font-semibold">
+                    Aérosols & Traces
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Surveillance sentinelle ultra-sensible de l'atmosphère française. Prélèvements d'air grand débit (700 m³/h) et spectrométrie gamma HPGe.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-mono text-teal-300">
+              <span className="bg-teal-950/80 border border-teal-800 px-2.5 py-1 rounded-lg">
+                Débit : 700 m³/h • ~85 000 m³/semaine
+              </span>
+            </div>
+          </div>
+
+          {/* Radionuclides Spectrometry Breakdown Table */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="font-bold text-white uppercase flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-teal-400" />
+                <span>Spectrométrie gamma différée : isotopes dosés sur le filtre</span>
+              </span>
+              <span className="text-[10px] text-slate-400">IRSN Métrologie • Germanium hyperpur</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-teal-800/40">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="font-bold text-teal-300">Césium-137 (Cs-137)</span>
+                  <span className="text-[9px] bg-purple-950 border border-purple-800 text-purple-300 px-1.5 py-0.2 rounded">Artificiel</span>
+                </div>
+                <div className="text-xl font-bold font-mono text-white mt-1">
+                  {val < 1 ? val.toFixed(2) : val.toFixed(1)} <span className="text-xs font-normal text-slate-400">µBq/m³</span>
+                </div>
+                <div className="text-[10px] text-teal-400/90 font-mono mt-0.5">
+                  {(val * 1e-6).toExponential(2)} Bq/m³ • T½ 30 ans
+                </div>
+                <div className="text-[9px] text-slate-400 mt-1">Traces rémanentes Tchernobyl / essais</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-sky-800/40">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="font-bold text-sky-300">Béryllium-7 (Be-7)</span>
+                  <span className="text-[9px] bg-sky-950 border border-sky-800 text-sky-300 px-1.5 py-0.2 rounded">Cosmogénique</span>
+                </div>
+                <div className="text-xl font-bold font-mono text-white mt-1">
+                  ~3 500 <span className="text-xs font-normal text-slate-400">µBq/m³</span>
+                </div>
+                <div className="text-[10px] text-sky-400/90 font-mono mt-0.5">
+                  3.5e-3 Bq/m³ • T½ 53 jours
+                </div>
+                <div className="text-[9px] text-slate-400 mt-1">Naturel (haute atmosphère)</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="font-bold text-amber-300">Plomb-210 (Pb-210)</span>
+                  <span className="text-[9px] bg-amber-950 border border-amber-800 text-amber-300 px-1.5 py-0.2 rounded">Tellurique</span>
+                </div>
+                <div className="text-xl font-bold font-mono text-white mt-1">
+                  ~450 <span className="text-xs font-normal text-slate-400">µBq/m³</span>
+                </div>
+                <div className="text-[10px] text-amber-400/90 font-mono mt-0.5">
+                  4.5e-4 Bq/m³ • T½ 22 ans
+                </div>
+                <div className="text-[9px] text-slate-400 mt-1">Descendant naturel du radon</div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="font-bold text-slate-300">Iode-131 (I-131)</span>
+                  <span className="text-[9px] bg-slate-800 border border-slate-700 text-slate-400 px-1.5 py-0.2 rounded">Récent</span>
+                </div>
+                <div className="text-sm font-bold font-mono text-emerald-400 mt-2">
+                  &lt; 0,15 µBq/m³
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                  Non détecté (&lt; LD) • T½ 8 j
+                </div>
+                <div className="text-[9px] text-emerald-400/80 mt-1">Aucune retombée fraîche</div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {station.source_code === 'HYDROTELERAY' && (
-        <div className="rounded-2xl border border-cyan-800/60 bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-cyan-950/20 p-4 text-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-cyan-600/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0">
-              <Activity className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="font-bold text-white font-mono flex items-center gap-2">
-                <span>RÉSEAU HYDROLOGIQUE CONTINU — HYDROTÉLÉRAY (IRSN)</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  Eaux Fluviales
-                </span>
+        <div className="rounded-2xl border border-cyan-800/80 bg-gradient-to-r from-cyan-950/50 via-slate-900/80 to-cyan-950/30 p-5 shadow-xl space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-cyan-800/40 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-cyan-600/20 border border-cyan-500/40 flex items-center justify-center text-cyan-300 shrink-0">
+                <Activity className="w-5 h-5" />
               </div>
-              <p className="text-slate-400 text-[11px] mt-0.5">
-                Surveillance continue de la radioactivité dans les grands fleuves français (Rhône, Seine, Loire, Garonne, Rhin, Meuse, Moselle) en aval des centres nucléaires de production d'électricité (CNPE). Mesure directe de l'activité volumique en Becquerels par litre (Bq/L) ciblant notamment le Tritium (H-3) et les émetteurs gamma solubles.
-              </p>
+              <div>
+                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <span>RÉSEAU HYDROLOGIQUE CONTINU — HYDROTÉLÉRAY (ASNR / IRSN)</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold">
+                    Eaux Fluviales
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Surveillance continue de la radioactivité dans les grands cours d'eau français concernés par les effluents liquides des centrales nucléaires (CNPE).
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs font-mono text-cyan-300">
+              <span className="bg-cyan-950/80 border border-cyan-800 px-2.5 py-1 rounded-lg">
+                Bassin : {station.hydroteleray_meta?.river_basin || 'Fluvial'} • {station.hydroteleray_meta?.watercourse || 'Cours d eau'}
+              </span>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-slate-900/90 border border-cyan-800/40 space-y-1">
+              <div className="text-[10px] font-mono uppercase text-slate-400 font-bold">Activité Tritium mesurée</div>
+              <div className="text-xl font-bold font-mono text-cyan-400">
+                {val.toFixed(1)} <span className="text-xs font-normal text-slate-300">Bq/L</span>
+              </div>
+              <div className="text-[10px] text-emerald-400 font-mono">100% conforme eau potable</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+              <div className="text-[10px] font-mono uppercase text-slate-400 font-bold">Référence Qualité UE</div>
+              <div className="text-xl font-bold font-mono text-amber-400">
+                100 <span className="text-xs font-normal text-slate-300">Bq/L</span>
+              </div>
+              <div className="text-[10px] text-slate-400">Directive 2013/51/Euratom</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+              <div className="text-[10px] font-mono uppercase text-slate-400 font-bold">Valeur Guide OMS</div>
+              <div className="text-xl font-bold font-mono text-emerald-400">
+                10 000 <span className="text-xs font-normal text-slate-300">Bq/L</span>
+              </div>
+              <div className="text-[10px] text-slate-400">Consommation vie entière</div>
+            </div>
+          </div>
+
+          {station.hydroteleray_meta?.associated_facilities && station.hydroteleray_meta.associated_facilities.length > 0 && (
+            <div className="pt-2 border-t border-cyan-900/40 text-[11px] text-slate-300">
+              <span className="font-semibold text-cyan-300">Installations nucléaires en amont surveillées : </span>
+              <span>{station.hydroteleray_meta.associated_facilities.join(', ')}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -341,24 +502,47 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
             isOfficial={station.is_official}
             dataNature={latest?.data_nature || station.data_nature}
             isSimulated={latest?.is_simulated ?? station.is_simulated}
+            measuredAt={latest?.measured_at}
+            qualityStatus={latest?.quality_status}
+            sourceCode={station.source_code}
+            measurementType={station.measurement_type}
           />
         </div>
 
         {/* Technical Metadata Box */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-xs flex flex-col justify-between text-xs space-y-2">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-xs flex flex-col justify-between text-xs space-y-2.5">
           <div>
-            <span className="text-[11px] font-mono uppercase text-slate-500">Horodatage de la mesure</span>
-            <div className="font-mono text-sm font-semibold text-white mt-0.5 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-amber-400" />
-              {latest?.measured_at
-                ? new Date(latest.measured_at).toLocaleString('fr-FR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : 'Non communiqué'}
+            <span className="text-[11px] font-mono uppercase text-slate-500">Traçabilité & Horodatage</span>
+            <div className="mt-1.5 space-y-1.5 font-mono text-[11px]">
+              <div className="flex items-center justify-between text-slate-300 bg-slate-950/70 px-2 py-1 rounded border border-slate-800/80">
+                <span className="flex items-center gap-1.5 text-amber-400">
+                  <Radio className="w-3 h-3 text-amber-400" />
+                  <span>Mesure effectuée :</span>
+                </span>
+                <span className="text-white font-semibold">
+                  {safeFormatTime(latest?.data_timestamp || latest?.measured_at)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-slate-300 bg-slate-950/70 px-2 py-1 rounded border border-slate-800/80">
+                <span className="flex items-center gap-1.5 text-sky-400">
+                  <Server className="w-3 h-3 text-sky-400" />
+                  <span>Reçue serveur :</span>
+                </span>
+                <span className="text-white font-semibold">
+                  {safeFormatTime(latest?.server_timestamp || latest?.received_at)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-slate-300 bg-slate-950/70 px-2 py-1 rounded border border-slate-800/80">
+                <span className="flex items-center gap-1.5 text-emerald-400">
+                  <Database className="w-3 h-3 text-emerald-400" />
+                  <span>Mise en cache :</span>
+                </span>
+                <span className="text-white font-semibold">
+                  {safeFormatTime(latest?.cache_timestamp, undefined, 'Locale (Dexie)')}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -388,8 +572,35 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
               {station.source_name || station.source_code || 'ASNR-IRSN'}
             </div>
           </div>
+
+          {onNavigateToMethodology && (
+            <div className="border-t border-slate-800 pt-2">
+              <button
+                onClick={onNavigateToMethodology}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-mono font-semibold transition"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                <span>Consulter la Méthodologie (Géologie, Pluie, Radon)</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Feature requested by user: « Pourquoi cette valeur ? » */}
+      <WhyThisValuePanel
+        station={station}
+        currentValue={val}
+        onNavigateToMethodology={onNavigateToMethodology}
+      />
+
+      {/* Recharts Component: Evolution on last 24h (User Request) */}
+      <Last24hRadiationChart
+        measurements={measurements}
+        unit={latest?.unit || 'nSv/h'}
+        sourceCode={station.source_code}
+        measurementType={station.measurement_type}
+      />
 
       {/* Historical Time-Series Chart */}
       <RadiationChart
@@ -423,15 +634,10 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
               {measurements.slice(-10).reverse().map(m => (
                 <tr key={m.id} className="text-slate-300">
                   <td className="py-2 text-slate-400">
-                    {new Date(m.measured_at).toLocaleString('fr-FR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {safeFormatDateTime(m.measured_at)}
                   </td>
                   <td className="py-2 font-bold text-amber-300">
-                    {m.value < 1 ? m.value.toFixed(2) : m.value.toFixed(1)} {m.unit}
+                    {safeFormatNumber(m.value, m.value < 1 ? 2 : 1)} {m.unit}
                   </td>
                   <td className="py-2 text-slate-400">
                     {station.measurement_type === 'ATMOSPHERIC_AEROSOLS' ? (

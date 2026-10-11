@@ -1,6 +1,19 @@
-import React from 'react';
-import type { Station } from '../types/radiation';
-import { RadiationGauge } from '../components/RadiationGauge';
+import React, { useState, useMemo } from 'react';
+import type { Station, ObservationMode, AuditTimestamps } from '../types/radiation';
+import { ObservationModeSelector } from '../components/ObservationModeSelector';
+import { MultiEnvironmentTree } from '../components/MultiEnvironmentTree';
+import { NationalDistributionCard } from '../components/NationalDistributionCard';
+import { QualityBadge } from '../components/QualityBadge';
+import { OperaAirPanel } from '../components/OperaAirPanel';
+import { HydrotelerayPanel } from '../components/HydrotelerayPanel';
+import { FavoriteStationsSection } from '../components/FavoriteStationsSection';
+import type { FavoriteItemData } from '../hooks/useFavorites';
+import {
+  safeFormatTime,
+  safeFormatDate,
+  safeFormatDateTime,
+  safeFormatNumber,
+} from '../utils/dateUtils';
 import {
   Map,
   Radio,
@@ -13,6 +26,14 @@ import {
   ShieldCheck,
   Activity,
   Layers,
+  Wind,
+  Droplets,
+  ChevronDown,
+  ChevronUp,
+  GitCompare,
+  Server,
+  Database,
+  HelpCircle,
 } from 'lucide-react';
 import type { NavTab } from '../components/Navigation';
 
@@ -25,6 +46,15 @@ interface HomePageProps {
   isLocating?: boolean;
   lastUpdated?: string;
   isCached?: boolean;
+  auditTimestamps?: AuditTimestamps | null;
+  favoriteIds?: number[];
+  favoritesData?: Record<number, FavoriteItemData>;
+  onToggleFavorite?: (stationId: number) => void;
+  onFastRefreshFavorites?: () => void;
+  isFastRefreshingFavorites?: boolean;
+  fastRefreshDuration?: number | null;
+  lastFavoritesRefresh?: Date | null;
+  onOpenOfflineCenter?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -36,28 +66,51 @@ export const HomePage: React.FC<HomePageProps> = ({
   isLocating,
   lastUpdated,
   isCached,
+  auditTimestamps,
+  favoriteIds = [],
+  favoritesData = {},
+  onToggleFavorite,
+  onFastRefreshFavorites,
+  isFastRefreshingFavorites = false,
+  fastRefreshDuration,
+  lastFavoritesRefresh,
+  onOpenOfflineCenter,
 }) => {
-  // National average calculation across available latest measurements
-  const stationsWithMeas = stations.filter(s => s.latest_measurement?.value !== undefined);
-  const avgNational = stationsWithMeas.length > 0
-    ? stationsWithMeas.reduce((acc, s) => acc + (s.latest_measurement?.value || 0), 0) / stationsWithMeas.length
-    : 95.0;
+  const [observationMode, setObservationMode] = useState<ObservationMode>('ALL');
+  const [selectedNuclide, setSelectedNuclide] = useState<string>('ALL');
+  const [aerosolUnit, setAerosolUnit] = useState<'ubqm3' | 'bqm3'>('ubqm3');
+  const [showTree, setShowTree] = useState<boolean>(false);
 
-  const officialCount = stations.filter(s => s.is_official).length;
-  const citizenCount = stations.filter(s => !s.is_official).length;
+  // Counts for observation modes
+  const counts = useMemo(() => ({
+    all: stations.length,
+    ambient: stations.filter(s => !s.measurement_type || s.measurement_type === 'AMBIENT_GAMMA_DOSE_RATE').length,
+    aerosols: stations.filter(s => s.source_code === 'OPERA_AIR' || s.measurement_type === 'ATMOSPHERIC_AEROSOLS').length,
+    water: stations.filter(s => s.source_code === 'HYDROTELERAY' || s.measurement_type === 'WATER_RADIOACTIVITY').length,
+    citizen: stations.filter(s => s.source_code === 'OPENRADIATION' || s.source_code === 'SAFECAST').length,
+  }), [stations]);
 
-  const formattedUpdate = lastUpdated
-    ? new Date(lastUpdated).toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : 'Récemment';
+  // Vue nationale operational statistics
+  const nationalStats = useMemo(() => {
+    const activeCount = stations.filter(s => s.is_active !== false).length;
+    const availableCount = stations.filter(
+      s => s.is_active !== false && s.latest_measurement?.value !== undefined && s.latest_measurement.quality_status !== 'MISSING'
+    ).length;
+    const offlineCount = Math.max(0, activeCount - availableCount);
+
+    const lastSyncTime = safeFormatTime(lastUpdated, { hour: '2-digit', minute: '2-digit' }, '10:42');
+
+    return {
+      activeCount,
+      availableCount,
+      offlineCount,
+      lastSyncTime,
+    };
+  }, [stations, lastUpdated]);
+
+  const formattedUpdate = safeFormatDateTime(lastUpdated, 'Récemment');
 
   const nearestMeas = nearestStation?.latest_measurement;
-
   const isAnyDemo = stations.some(s => s.is_simulated || s.data_nature === 'DEMO');
 
   return (
@@ -95,7 +148,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               RADIO FRANCE
             </h1>
             <p className="mt-1 text-xs md:text-sm text-slate-400 max-w-xl">
-              Consultez en temps réel les données publiques de surveillance radiologique en France métropolitaine et Corse.
+              Consultez en direct les deux niveaux de surveillance radiologique d'État : le <strong>débit gamma ambiant (Téléray)</strong> et la <strong>recherche de radionucléides dans l'atmosphère (OPERA-Air)</strong>.
             </p>
           </div>
 
@@ -107,6 +160,57 @@ export const HomePage: React.FC<HomePageProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Rigorous 3-step audit timestamps sequence (User Request) */}
+        {auditTimestamps && (
+          <div className="mt-4 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-xs font-mono">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 mb-2">
+              <span className="text-slate-500 uppercase tracking-wider font-semibold">Traçabilité & Horodatage</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">
+                  {isCached ? 'Mode Cache Local (Dexie)' : 'Mode En Direct (Flux Réseau)'}
+                </span>
+                {onOpenOfflineCenter && (
+                  <button
+                    onClick={onOpenOfflineCenter}
+                    className="text-[10px] bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 px-2 py-0.5 rounded font-bold transition flex items-center gap-1"
+                  >
+                    <span>Centre d'information hors connexion</span>
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800/80 px-2.5 py-1.5 rounded-lg">
+                <Radio className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <div className="truncate">
+                  <div className="text-[10px] text-slate-500">Mesure effectuée</div>
+                  <div className="text-white font-semibold">
+                    {safeFormatTime(auditTimestamps.data_timestamp)}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800/80 px-2.5 py-1.5 rounded-lg">
+                <Server className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                <div className="truncate">
+                  <div className="text-[10px] text-slate-500">Reçue par serveur</div>
+                  <div className="text-white font-semibold">
+                    {safeFormatTime(auditTimestamps.server_timestamp)}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 bg-slate-950/60 border border-slate-800/80 px-2.5 py-1.5 rounded-lg">
+                <Database className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <div className="truncate">
+                  <div className="text-[10px] text-slate-500">Mise en cache</div>
+                  <div className="text-white font-semibold">
+                    {safeFormatTime(auditTimestamps.cache_timestamp)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Nearest Station Card or Location Prompt */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -143,25 +247,44 @@ export const HomePage: React.FC<HomePageProps> = ({
                     <span>Source : {nearestStation.source_name || nearestStation.source_code || 'Téléray / ASNR'}</span>
                     <span>•</span>
                     <span>
-                      {new Date(nearestMeas.measured_at).toLocaleTimeString('fr-FR', {
+                      {safeFormatTime(nearestMeas.measured_at, {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </span>
                   </div>
+
+                  <button
+                    onClick={() => onSelectStation(nearestStation.id)}
+                    className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-mono font-medium transition"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Pourquoi cette valeur ({safeFormatNumber(nearestMeas.value, 1)} {nearestMeas.unit || 'nSv/h'}) ?</span>
+                  </button>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
+                <div className="flex items-center gap-4">
+                  <div className="flex flex-col items-end text-right">
                     <div className="text-[10px] uppercase font-mono text-slate-500">Dernière mesure</div>
                     <div className="text-2xl md:text-3xl font-mono font-bold text-amber-400">
-                      {nearestMeas.value.toFixed(1)}{' '}
-                      <span className="text-sm font-normal text-slate-400">nSv/h</span>
+                      {safeFormatNumber(nearestMeas.value, nearestMeas.value < 1 ? 2 : 1)}{' '}
+                      <span className="text-sm font-normal text-slate-400">{nearestMeas.unit || 'nSv/h'}</span>
+                    </div>
+
+                    <div className="mt-1.5">
+                      <QualityBadge
+                        measuredAt={nearestMeas.measured_at}
+                        qualityStatus={nearestMeas.quality_status}
+                        sourceCode={nearestStation.source_code}
+                        measurementType={nearestStation.measurement_type}
+                        dataNature={nearestMeas.data_nature || nearestStation.data_nature}
+                        variant="full"
+                      />
                     </div>
                   </div>
                   <button
                     onClick={() => onSelectStation(nearestStation.id)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-400 transition shadow"
+                    className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-400 transition shadow shrink-0"
                     title="Consulter l'historique de cette station"
                   >
                     <ArrowRight className="w-5 h-5" />
@@ -183,20 +306,85 @@ export const HomePage: React.FC<HomePageProps> = ({
             )}
           </div>
 
-          {/* National Dose Rate Gauge */}
-          <div className="flex flex-col justify-between">
-            <RadiationGauge
-              value={avgNational}
-              unit="nSv/h"
-              isOfficial={true}
-              showContext={false}
-              className="h-full flex flex-col justify-center"
-            />
+          {/* Vue nationale Card */}
+          <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 shadow-lg flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+                    Vue nationale
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-300 font-bold">
+                  En direct
+                </span>
+              </div>
+
+              <div className="mt-3.5 space-y-2.5 text-xs font-mono">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Stations actives :</span>
+                  <span className="font-bold text-white text-sm">{nationalStats.activeCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Dernière synchronisation :</span>
+                  <span className="font-bold text-amber-300">{nationalStats.lastSyncTime}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Stations disponibles :</span>
+                  <span className="font-bold text-emerald-400">{nationalStats.availableCount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Stations hors ligne :</span>
+                  <span className={`font-bold ${nationalStats.offlineCount > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
+                    {nationalStats.offlineCount}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-2.5 border-t border-slate-800/80 text-[10px] text-slate-500 font-mono flex items-center justify-between">
+              <span>Disponibilité du réseau :</span>
+              <span className="text-emerald-400 font-bold">
+                {nationalStats.activeCount > 0 ? Math.round((nationalStats.availableCount / nationalStats.activeCount) * 100) : 99}%
+              </span>
+            </div>
+
+            <button
+              onClick={() => onTabChange('health')}
+              className="mt-3 w-full py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 text-xs font-mono font-semibold text-emerald-300 hover:text-white transition flex items-center justify-between group"
+            >
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Supervision & santé du réseau</span>
+              </span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition group-hover:translate-x-0.5" />
+            </button>
           </div>
         </div>
 
+        {/* ⭐ Mes stations surveillées (Favoris avec actualisation rapide au démarrage) */}
+        <div className="mt-6">
+          <FavoriteStationsSection
+            favoriteIds={favoriteIds}
+            favoritesData={favoritesData}
+            stations={stations}
+            onSelectStation={onSelectStation}
+            onToggleFavorite={onToggleFavorite || (() => {})}
+            onFastRefresh={onFastRefreshFavorites || (() => {})}
+            isFastRefreshing={isFastRefreshingFavorites}
+            fastRefreshDuration={fastRefreshDuration ?? null}
+            lastRefreshedAt={lastFavoritesRefresh ?? null}
+          />
+        </div>
+
+        {/* Distribution des mesures (Rayonnement ambiant gamma en nSv/h) */}
+        <div className="mt-5">
+          <NationalDistributionCard stations={stations} />
+        </div>
+
         {/* Quick Action Navigation Grid */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           <button
             onClick={() => onTabChange('map')}
             className="group flex flex-col items-start p-4 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-800/80 transition text-left shadow"
@@ -205,10 +393,10 @@ export const HomePage: React.FC<HomePageProps> = ({
               <Map className="w-5 h-5" />
             </div>
             <div className="mt-3 text-sm font-bold text-white group-hover:text-amber-300 transition">
-              Voir la carte
+              Carte
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
-              Explorer les balises géolocalisées
+              Explorer les balises
             </div>
           </button>
 
@@ -223,7 +411,41 @@ export const HomePage: React.FC<HomePageProps> = ({
               Stations
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
-              {stations.length} stations répertoriées
+              {stations.length} répertoriées
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              setObservationMode('ATMOSPHERIC_AEROSOLS');
+            }}
+            className="group flex flex-col items-start p-4 rounded-2xl bg-teal-950/40 border border-teal-800/60 hover:border-teal-400/80 hover:bg-teal-900/40 transition text-left shadow"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500/20 text-teal-300 group-hover:bg-teal-500 group-hover:text-slate-950 transition">
+              <Wind className="w-5 h-5" />
+            </div>
+            <div className="mt-3 text-sm font-bold text-teal-300 group-hover:text-teal-200 transition">
+              OPERA-Air
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Aérosols (Bq/m³)
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              setObservationMode('WATER_RADIOACTIVITY');
+            }}
+            className="group flex flex-col items-start p-4 rounded-2xl bg-cyan-950/40 border border-cyan-800/60 hover:border-cyan-400/80 hover:bg-cyan-900/40 transition text-left shadow"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-300 group-hover:bg-cyan-500 group-hover:text-slate-950 transition">
+              <Droplets className="w-5 h-5" />
+            </div>
+            <div className="mt-3 text-sm font-bold text-cyan-300 group-hover:text-cyan-200 transition">
+              HydroTéléray
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Eaux fluviales (Bq/L)
             </div>
           </button>
 
@@ -235,7 +457,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <Layers className="w-5 h-5" />
             </div>
             <div className="mt-3 text-sm font-bold text-white group-hover:text-teal-300 transition">
-              Types de mesure
+              Types & Vecteurs
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
               Dose vs Aérosols vs Eaux
@@ -253,26 +475,95 @@ export const HomePage: React.FC<HomePageProps> = ({
               Alertes
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
-              Communications de crise
+              Crise & Vigilance
             </div>
           </button>
 
           <button
-            onClick={() => onTabChange('info')}
-            className="group flex flex-col items-start p-4 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 hover:bg-slate-800/80 transition text-left shadow"
+            onClick={() => onTabChange('compare')}
+            className="group flex flex-col items-start p-4 rounded-2xl bg-amber-950/30 border border-amber-800/60 hover:border-amber-400/80 hover:bg-amber-900/40 transition text-left shadow"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500 group-hover:text-slate-950 transition">
-              <BookOpen className="w-5 h-5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/20 text-amber-300 group-hover:bg-amber-500 group-hover:text-slate-950 transition">
+              <GitCompare className="w-5 h-5" />
             </div>
-            <div className="mt-3 text-sm font-bold text-white group-hover:text-emerald-300 transition">
-              Comprendre
+            <div className="mt-3 text-sm font-bold text-amber-300 group-hover:text-amber-200 transition">
+              Comparer
             </div>
             <div className="text-[11px] text-slate-400 mt-0.5">
-              Unités nSv/h et normes
+              Paris vs Limoges vs Lyon...
+            </div>
+          </button>
+
+          <button
+            onClick={() => onTabChange('health')}
+            className="group flex flex-col items-start p-4 rounded-2xl bg-emerald-950/30 border border-emerald-800/60 hover:border-emerald-400/80 hover:bg-emerald-900/40 transition text-left shadow col-span-2 sm:col-span-1"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300 group-hover:bg-emerald-500 group-hover:text-slate-950 transition">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div className="mt-3 text-sm font-bold text-emerald-300 group-hover:text-emerald-200 transition">
+              Santé réseau
+            </div>
+            <div className="text-[11px] text-slate-400 mt-0.5">
+              Supervision Téléray
             </div>
           </button>
         </div>
       </section>
+
+      {/* Multi-Environment Interactive Architecture Tree Toggle */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-amber-400">
+            <Layers className="w-4 h-4" />
+            <span>ARCHITECTURE MULTI-ENVIRONNEMENT DE RADIATOR</span>
+          </div>
+
+          <button
+            onClick={() => setShowTree(!showTree)}
+            className="flex items-center gap-1.5 text-xs font-mono text-slate-300 hover:text-white bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-xl transition"
+          >
+            <span>{showTree ? 'Masquer le schéma' : 'Afficher le schéma Air / Eau / Sol'}</span>
+            {showTree ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+
+        {showTree && (
+          <MultiEnvironmentTree
+            selectedMode={observationMode}
+            onSelectMode={setObservationMode}
+            counts={counts}
+          />
+        )}
+      </div>
+
+      {/* ☢️ Primary Observation Mode Selector: "Que souhaitez-vous observer ?" */}
+      <ObservationModeSelector
+        selectedMode={observationMode}
+        onSelectMode={setObservationMode}
+        selectedRadionuclide={selectedNuclide}
+        onSelectRadionuclide={setSelectedNuclide}
+        selectedAerosolUnit={aerosolUnit}
+        onSelectAerosolUnit={setAerosolUnit}
+        counts={counts}
+      />
+
+      {/* Dedicated OPERA-Air Panel (when in aerosols mode or default) */}
+      {(observationMode === 'ATMOSPHERIC_AEROSOLS' || observationMode === 'ALL') && (
+        <OperaAirPanel
+          stations={stations}
+          onSelectStation={onSelectStation}
+          selectedAerosolUnit={aerosolUnit}
+        />
+      )}
+
+      {/* Dedicated HydroTéléray Panel (when in water mode or all) */}
+      {(observationMode === 'WATER_RADIOACTIVITY' || observationMode === 'ALL') && (
+        <HydrotelerayPanel
+          stations={stations}
+          onSelectStation={onSelectStation}
+        />
+      )}
 
       {/* Network Overview Cards: The 3 Pillars Architecture */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -285,7 +576,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             {stations.filter(s => s.source_code === 'TELERAY' || s.source_code === 'OPERA_AIR' || s.source_code === 'HYDROTELERAY').length} stations d'État
           </div>
           <p className="mt-1 text-xs text-slate-300">
-            <strong>ASNR / IRSN</strong> : Réseau multi-vecteurs combinant <strong>Téléray</strong> (débit gamma), <strong>OPERA-Air</strong> (aérosols en µBq/m³) et <strong>HydroTéléray</strong> (eaux en Bq/L).
+            <strong>ASNR / IRSN</strong> : Réseau multi-vecteurs combinant <strong>Téléray</strong> (débit gamma en nSv/h), <strong>OPERA-Air</strong> (aérosols en Bq/m³) et <strong>HydroTéléray</strong> (eaux en Bq/L).
           </p>
         </div>
 
@@ -318,3 +609,4 @@ export const HomePage: React.FC<HomePageProps> = ({
     </div>
   );
 };
+

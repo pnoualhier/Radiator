@@ -1,45 +1,68 @@
 import React, { useState, useMemo } from 'react';
-import type { Station } from '../types/radiation';
-import { Search, Radio, ShieldCheck, Users, MapPin, ArrowUpDown, ChevronRight, Activity, Wind, Droplets, Filter } from 'lucide-react';
+import type { Station, ObservationMode } from '../types/radiation';
+import { ObservationModeSelector } from '../components/ObservationModeSelector';
+import { QualityBadge } from '../components/QualityBadge';
+import { Search, Radio, ShieldCheck, Users, MapPin, ArrowUpDown, ChevronRight, Activity, Wind, Droplets, Filter, Sparkles, GitCompare, Star } from 'lucide-react';
 
 interface StationsListPageProps {
   stations: Station[];
   onSelectStation: (stationId: number) => void;
+  onCompareStation?: (stationId: number) => void;
   userCoords?: { latitude: number; longitude: number } | null;
+  favoriteIds?: number[];
+  onToggleFavorite?: (stationId: number) => void;
 }
 
 export const StationsListPage: React.FC<StationsListPageProps> = ({
   stations,
   onSelectStation,
+  onCompareStation,
   userCoords,
+  favoriteIds = [],
+  onToggleFavorite,
 }) => {
   const [search, setSearch] = useState('');
-  const [filterSource, setFilterSource] = useState<string>('ALL');
-  const [filterMeasurementType, setFilterMeasurementType] = useState<string>('ALL');
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [observationMode, setObservationMode] = useState<ObservationMode>('ALL');
+  const [selectedNuclide, setSelectedNuclide] = useState<string>('ALL');
+  const [aerosolUnit, setAerosolUnit] = useState<'ubqm3' | 'bqm3'>('ubqm3');
   const [sortBy, setSortBy] = useState<'name' | 'value' | 'distance'>('name');
 
-  const instCount = useMemo(() => stations.filter(s => s.source_code === 'TELERAY' || s.source_code === 'OPERA_AIR' || s.source_code === 'HYDROTELERAY').length, [stations]);
-  const partCount = useMemo(() => stations.filter(s => s.source_code === 'OPENRADIATION').length, [stations]);
-  const intlCount = useMemo(() => stations.filter(s => s.source_code === 'EURDEP' || s.source_code === 'SAFECAST').length, [stations]);
-
-  const gammaCount = useMemo(() => stations.filter(s => !s.measurement_type || s.measurement_type === 'AMBIENT_GAMMA_DOSE_RATE').length, [stations]);
-  const aerosolCount = useMemo(() => stations.filter(s => s.measurement_type === 'ATMOSPHERIC_AEROSOLS').length, [stations]);
-  const waterCount = useMemo(() => stations.filter(s => s.measurement_type === 'WATER_RADIOACTIVITY').length, [stations]);
+  const counts = useMemo(() => ({
+    all: stations.length,
+    ambient: stations.filter(s => !s.measurement_type || s.measurement_type === 'AMBIENT_GAMMA_DOSE_RATE').length,
+    aerosols: stations.filter(s => s.source_code === 'OPERA_AIR' || s.measurement_type === 'ATMOSPHERIC_AEROSOLS').length,
+    water: stations.filter(s => s.source_code === 'HYDROTELERAY' || s.measurement_type === 'WATER_RADIOACTIVITY').length,
+    citizen: stations.filter(s => s.source_code === 'OPENRADIATION' || s.source_code === 'SAFECAST').length,
+  }), [stations]);
 
   const filteredAndSorted = useMemo(() => {
     let result = stations.filter(s => {
-      // Source filter
-      if (filterSource === 'INSTITUTIONAL' && s.source_code !== 'TELERAY' && s.source_code !== 'OPERA_AIR' && s.source_code !== 'HYDROTELERAY') return false;
-      if (filterSource === 'PARTICIPATORY' && s.source_code !== 'OPENRADIATION') return false;
-      if (filterSource === 'INTERNATIONAL' && (s.source_code !== 'EURDEP' && s.source_code !== 'SAFECAST')) return false;
-      if (filterSource !== 'ALL' && filterSource !== 'INSTITUTIONAL' && filterSource !== 'PARTICIPATORY' && filterSource !== 'INTERNATIONAL' && s.source_code !== filterSource) return false;
-
-      // Measurement type filter
-      if (filterMeasurementType !== 'ALL') {
-        const sType = s.measurement_type || 'AMBIENT_GAMMA_DOSE_RATE';
-        if (sType !== filterMeasurementType) return false;
+      // 1. Observation Mode Filter
+      if (observationMode === 'AMBIENT_GAMMA') {
+        if (s.measurement_type && s.measurement_type !== 'AMBIENT_GAMMA_DOSE_RATE') return false;
+      } else if (observationMode === 'ATMOSPHERIC_AEROSOLS') {
+        if (s.source_code !== 'OPERA_AIR' && s.measurement_type !== 'ATMOSPHERIC_AEROSOLS') return false;
+      } else if (observationMode === 'WATER_RADIOACTIVITY') {
+        if (s.source_code !== 'HYDROTELERAY' && s.measurement_type !== 'WATER_RADIOACTIVITY') return false;
+      } else if (observationMode === 'CITIZEN_DATA') {
+        if (s.source_code !== 'OPENRADIATION' && s.source_code !== 'SAFECAST') return false;
       }
 
+      // 2. Radionuclide Filter
+      if (selectedNuclide && selectedNuclide !== 'ALL') {
+        const target = selectedNuclide.toUpperCase();
+        if (!s.radionuclide_focus || !s.radionuclide_focus.toUpperCase().includes(target)) {
+          return false;
+        }
+      }
+
+      // 2b. Only Favorites filter
+      if (onlyFavorites) {
+        if (!favoriteIds.includes(s.id)) return false;
+      }
+
+      // 3. Search query
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         const n = s.name.toLowerCase();
@@ -67,7 +90,7 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
     });
 
     return result;
-  }, [stations, search, filterSource, filterMeasurementType, sortBy]);
+  }, [stations, search, observationMode, selectedNuclide, sortBy, onlyFavorites, favoriteIds]);
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
@@ -76,106 +99,24 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white font-mono flex items-center gap-2">
             <Radio className="w-6 h-6 text-amber-400" />
-            STATIONS DE SURVEILLANCE
+            STATIONS & BALISES DU TERRITOIRE
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            {filteredAndSorted.length} balises et capteurs répertoriés sur le territoire (Dose gamma, Aérosols, Eaux)
+            {filteredAndSorted.length} stations sélectionnées sur {stations.length} au total (Téléray, OPERA-Air, HydroTéléray, OpenRadiation)
           </p>
         </div>
-
-        {/* 3 Pillars Filter Toggle */}
-        <div className="flex flex-wrap rounded-xl bg-slate-900 border border-slate-800 p-0.5 text-xs gap-1">
-          <button
-            onClick={() => setFilterSource('ALL')}
-            className={`px-3 py-1.5 rounded-lg transition font-medium ${
-              filterSource === 'ALL' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Toutes sources ({stations.length})
-          </button>
-          <button
-            onClick={() => setFilterSource('INSTITUTIONAL')}
-            className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
-              filterSource === 'INSTITUTIONAL' ? 'bg-emerald-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-            <span>Institutionnel ({instCount})</span>
-          </button>
-          <button
-            onClick={() => setFilterSource('PARTICIPATORY')}
-            className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
-              filterSource === 'PARTICIPATORY' ? 'bg-purple-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5 text-purple-300" />
-            <span>Participatif ({partCount})</span>
-          </button>
-          <button
-            onClick={() => setFilterSource('INTERNATIONAL')}
-            className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
-              filterSource === 'INTERNATIONAL' ? 'bg-sky-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Radio className="w-3.5 h-3.5 text-sky-300" />
-            <span>International ({intlCount})</span>
-          </button>
-        </div>
       </div>
 
-      {/* Measurement Type Sub-Filter Bar */}
-      <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/60 border border-slate-800 p-1 rounded-2xl text-xs">
-        <span className="text-[11px] font-mono text-slate-500 px-2 flex items-center gap-1">
-          <Filter className="w-3 h-3" />
-          <span>Type de mesure :</span>
-        </span>
-
-        <button
-          onClick={() => setFilterMeasurementType('ALL')}
-          className={`px-2.5 py-1 rounded-xl transition font-medium ${
-            filterMeasurementType === 'ALL'
-              ? 'bg-slate-700 text-white font-bold'
-              : 'text-slate-400 hover:text-white'
-          }`}
-        >
-          Tous les types ({stations.length})
-        </button>
-
-        <button
-          onClick={() => setFilterMeasurementType('AMBIENT_GAMMA_DOSE_RATE')}
-          className={`px-2.5 py-1 rounded-xl transition flex items-center gap-1 ${
-            filterMeasurementType === 'AMBIENT_GAMMA_DOSE_RATE'
-              ? 'bg-amber-500 text-slate-950 font-bold'
-              : 'text-slate-300 hover:text-white'
-          }`}
-        >
-          <span>⚡ Débit de dose gamma ({gammaCount})</span>
-        </button>
-
-        <button
-          onClick={() => setFilterMeasurementType('ATMOSPHERIC_AEROSOLS')}
-          className={`px-2.5 py-1 rounded-xl transition flex items-center gap-1 ${
-            filterMeasurementType === 'ATMOSPHERIC_AEROSOLS'
-              ? 'bg-teal-600 text-white font-bold'
-              : 'text-slate-300 hover:text-white'
-          }`}
-        >
-          <Wind className="w-3 h-3" />
-          <span>Aérosols atmosphériques (OPERA-Air) ({aerosolCount})</span>
-        </button>
-
-        <button
-          onClick={() => setFilterMeasurementType('WATER_RADIOACTIVITY')}
-          className={`px-2.5 py-1 rounded-xl transition flex items-center gap-1 ${
-            filterMeasurementType === 'WATER_RADIOACTIVITY'
-              ? 'bg-cyan-600 text-white font-bold'
-              : 'text-slate-300 hover:text-white'
-          }`}
-        >
-          <Droplets className="w-3 h-3" />
-          <span>Radioactivité dans l'eau (HydroTéléray) ({waterCount})</span>
-        </button>
-      </div>
+      {/* ☢️ Primary Observation Mode Selector: "Que souhaitez-vous observer ?" */}
+      <ObservationModeSelector
+        selectedMode={observationMode}
+        onSelectMode={setObservationMode}
+        selectedRadionuclide={selectedNuclide}
+        onSelectRadionuclide={setSelectedNuclide}
+        selectedAerosolUnit={aerosolUnit}
+        onSelectAerosolUnit={setAerosolUnit}
+        counts={counts}
+      />
 
       {/* Search & Sort Controls */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -185,32 +126,70 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Rechercher par nom, isotope (Cs-137, H-3), commune, département..."
+            placeholder="Rechercher par station, isotope (Cs-137, Be-7, H-3), commune, département..."
             className="w-full rounded-xl bg-slate-900 border border-slate-800 pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <ArrowUpDown className="w-4 h-4 text-slate-500 shrink-0" />
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value as any)}
-            className="w-full rounded-xl bg-slate-900 border border-slate-800 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
-          >
-            <option value="name">Trier par : Nom alphabétique</option>
-            <option value="value">Trier par : Valeur la plus forte</option>
-            {userCoords && <option value="distance">Trier par : Distance la plus proche</option>}
-          </select>
+        <div className="flex flex-wrap items-center gap-2">
+          {favoriteIds && favoriteIds.length > 0 && (
+            <button
+              onClick={() => setOnlyFavorites(!onlyFavorites)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-mono font-semibold transition shrink-0 ${
+                onlyFavorites
+                  ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow'
+                  : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Star className={`w-3.5 h-3.5 ${onlyFavorites ? 'fill-slate-950 text-slate-950' : 'text-amber-400'}`} />
+              <span>Mes favoris ({favoriteIds.length})</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 flex-1 sm:w-auto">
+            <ArrowUpDown className="w-4 h-4 text-slate-500 shrink-0" />
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value as any)}
+              className="w-full rounded-xl bg-slate-900 border border-slate-800 px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+            >
+              <option value="name">Trier par : Nom alphabétique</option>
+              <option value="value">Trier par : Valeur la plus forte</option>
+              {userCoords && <option value="distance">Trier par : Distance la plus proche</option>}
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Stations List Table / Cards */}
+      {/* Stations List Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {filteredAndSorted.map(station => {
           const latest = station.latest_measurement;
           const val = latest?.value;
           const measType = station.measurement_type || latest?.measurement_type || 'AMBIENT_GAMMA_DOSE_RATE';
-          const unit = latest?.unit || station.latest_measurement?.unit || (measType === 'ATMOSPHERIC_AEROSOLS' ? 'µBq/m³' : measType === 'WATER_RADIOACTIVITY' ? 'Bq/L' : 'nSv/h');
+          const isOpera = station.source_code === 'OPERA_AIR';
+          const isHydro = station.source_code === 'HYDROTELERAY';
+
+          let displayVal = '—';
+          let displayUnit = latest?.unit || station.unit || 'nSv/h';
+
+          if (val !== undefined) {
+            if (isOpera) {
+              if (aerosolUnit === 'bqm3') {
+                displayVal = (val * 1e-6).toExponential(2);
+                displayUnit = 'Bq/m³';
+              } else {
+                displayVal = val < 1 ? val.toFixed(2) : val.toFixed(1);
+                displayUnit = 'µBq/m³';
+              }
+            } else if (isHydro) {
+              displayVal = val.toFixed(1);
+              displayUnit = 'Bq/L';
+            } else {
+              displayVal = val < 1 ? val.toFixed(2) : val.toFixed(1);
+              displayUnit = 'nSv/h';
+            }
+          }
 
           return (
             <div
@@ -218,34 +197,34 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
               onClick={() => onSelectStation(station.id)}
               className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-amber-500/40 hover:bg-slate-800/60 transition cursor-pointer group shadow-sm"
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 min-w-0 flex-1 pr-3">
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
-                    measType === 'ATMOSPHERIC_AEROSOLS'
+                    isOpera
                       ? 'bg-teal-500/20 text-teal-400 group-hover:bg-teal-500 group-hover:text-slate-950'
-                      : measType === 'WATER_RADIOACTIVITY'
+                      : isHydro
                       ? 'bg-cyan-500/20 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-slate-950'
                       : 'bg-slate-800 text-amber-400 group-hover:bg-amber-500/20'
                   }`}
                 >
-                  {measType === 'ATMOSPHERIC_AEROSOLS' ? (
+                  {isOpera ? (
                     <Wind className="w-5 h-5" />
-                  ) : measType === 'WATER_RADIOACTIVITY' ? (
+                  ) : isHydro ? (
                     <Droplets className="w-5 h-5" />
                   ) : (
                     <Radio className="w-5 h-5" />
                   )}
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-bold text-white group-hover:text-amber-300 transition text-sm">
+                    <span className="font-bold text-white group-hover:text-amber-300 transition text-sm truncate">
                       {station.name}
                     </span>
 
                     {/* Source Badge */}
                     {station.source_code === 'OPERA_AIR' ? (
                       <span className="text-[10px] font-semibold bg-teal-950/80 border border-teal-800 text-teal-300 px-1.5 py-0.5 rounded">
-                        OPERA-Air
+                        OPERA-Air (Aérosols)
                       </span>
                     ) : station.source_code === 'HYDROTELERAY' ? (
                       <span className="text-[10px] font-semibold bg-cyan-950/80 border border-cyan-800 text-cyan-300 px-1.5 py-0.5 rounded">
@@ -270,27 +249,17 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
                     )}
 
                     {/* Vector Type Tag */}
-                    {measType === 'ATMOSPHERIC_AEROSOLS' ? (
+                    {isOpera ? (
                       <span className="text-[9px] font-medium bg-teal-500/10 text-teal-300 border border-teal-500/20 px-1.5 py-0.5 rounded">
-                        Aérosols
+                        700 m³/h • Filtre PPO
                       </span>
-                    ) : measType === 'WATER_RADIOACTIVITY' ? (
+                    ) : isHydro ? (
                       <span className="text-[9px] font-medium bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-1.5 py-0.5 rounded">
-                        Eau
+                        Eau fluviale
                       </span>
                     ) : (
                       <span className="text-[9px] font-medium bg-amber-500/10 text-amber-300 border border-amber-500/20 px-1.5 py-0.5 rounded">
                         Dose gamma
-                      </span>
-                    )}
-
-                    {station.is_simulated || station.data_nature === 'DEMO' ? (
-                      <span className="text-[9px] font-medium bg-amber-950/80 border border-amber-700/60 text-amber-300 px-1.5 py-0.2 rounded">
-                        Simulé
-                      </span>
-                    ) : (
-                      <span className="text-[9px] font-medium bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 px-1.5 py-0.2 rounded">
-                        Réel
                       </span>
                     )}
                   </div>
@@ -302,8 +271,8 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
                       {station.department_code && ` (${station.department_code})`}
                     </span>
                     {station.radionuclide_focus && (
-                      <span className="text-slate-500">
-                        • Cible : <strong className="text-slate-300">{station.radionuclide_focus.split(',')[0]}</strong>
+                      <span className="text-slate-400 font-mono text-[11px]">
+                        • Nucléides : <strong className="text-amber-300">{station.radionuclide_focus}</strong>
                       </span>
                     )}
                     {station.distance_km !== undefined && (
@@ -315,16 +284,57 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <div className="font-mono text-xl font-bold text-white group-hover:text-amber-400 transition">
-                    {val !== undefined ? (val < 1 ? val.toFixed(2) : val.toFixed(1)) : '—'}
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex flex-col items-end text-right">
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-mono text-xl font-bold text-white group-hover:text-amber-400 transition">
+                      {displayVal}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {displayUnit}
+                    </span>
                   </div>
-                  <div className="text-[10px] text-slate-400 font-mono">
-                    {unit}
+
+                  <div className="mt-1">
+                    <QualityBadge
+                      measuredAt={station.latest_measurement?.measured_at}
+                      qualityStatus={station.latest_measurement?.quality_status}
+                      sourceCode={station.source_code}
+                      measurementType={station.measurement_type}
+                      dataNature={station.latest_measurement?.data_nature || station.data_nature}
+                      variant="full"
+                      align="right"
+                    />
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-slate-300 transition" />
+
+                {onToggleFavorite && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(station.id);
+                    }}
+                    title={favoriteIds.includes(station.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
+                    className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-amber-400 border border-slate-700/60 transition"
+                  >
+                    <Star className={`w-4 h-4 ${favoriteIds.includes(station.id) ? 'fill-amber-400 text-amber-400' : 'text-slate-500 hover:text-amber-400'}`} />
+                  </button>
+                )}
+
+                {onCompareStation && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCompareStation(station.id);
+                    }}
+                    title="Comparer cette balise avec Paris, Limoges, Brest ou Lyon"
+                    className="p-2 rounded-xl bg-slate-800/80 hover:bg-amber-500/20 text-slate-400 hover:text-amber-400 border border-slate-700/60 transition"
+                  >
+                    <GitCompare className="w-4 h-4" />
+                  </button>
+                )}
+
+                <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-slate-300 transition shrink-0" />
               </div>
             </div>
           );

@@ -8,6 +8,8 @@ interface HeaderProps {
   onOpenAdminSync?: () => void;
   isRefreshing?: boolean;
   onRefresh?: () => void;
+  onNavigateToHealth?: () => void;
+  onOpenOfflineCenter?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,8 +17,18 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAdminSync,
   isRefreshing,
   onRefresh,
+  onNavigateToHealth,
+  onOpenOfflineCenter,
 }) => {
   const isOnline = useOnlineStatus();
+
+  const handleConnectivityClick = () => {
+    if (!isOnline && onOpenOfflineCenter) {
+      onOpenOfflineCenter();
+    } else if (onNavigateToHealth) {
+      onNavigateToHealth();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
@@ -49,25 +61,27 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Actions & Status */}
         <div className="flex items-center gap-2">
           {/* Connectivity Badge */}
-          <div
-            className={`hidden sm:flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border ${
+          <button
+            onClick={handleConnectivityClick}
+            title={isOnline ? "Consulter l'état de santé du réseau et des sources" : "Ouvrir le centre d'information hors connexion"}
+            className={`hidden sm:flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border transition cursor-pointer hover:opacity-90 ${
               isOnline
-                ? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-400'
-                : 'border-amber-500/30 bg-amber-950/40 text-amber-300'
+                ? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-400 hover:bg-emerald-950/70'
+                : 'border-amber-500/30 bg-amber-950/40 text-amber-300 hover:bg-amber-950/70'
             }`}
           >
             {isOnline ? (
               <>
                 <Wifi className="w-3 h-3 text-emerald-400" />
-                <span>En direct</span>
+                <span className="font-mono">Réseau : En direct</span>
               </>
             ) : (
               <>
                 <WifiOff className="w-3 h-3 text-amber-400" />
-                <span>Hors ligne</span>
+                <span className="font-mono">Hors ligne</span>
               </>
             )}
-          </div>
+          </button>
 
           {/* Search Trigger */}
           {onOpenSearch && (

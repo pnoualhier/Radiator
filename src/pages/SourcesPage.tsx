@@ -3,6 +3,7 @@ import type { Source, SourceHealth } from '../types/radiation';
 import { ApiService } from '../services/api';
 import { Database, ShieldCheck, Users, ExternalLink, RefreshCw, Key, CheckCircle, Clock } from 'lucide-react';
 import { SyncAdminModal } from '../components/SyncAdminModal';
+import { safeFormatDateTime } from '../utils/dateUtils';
 
 export const SourcesPage: React.FC = () => {
   const [sources, setSources] = useState<Source[]>([]);
@@ -232,14 +233,7 @@ export const SourcesPage: React.FC = () => {
                       <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
                         <span>Dernière synchro :</span>
                         <span className="text-slate-300">
-                          {health.last_sync_at
-                            ? new Date(health.last_sync_at).toLocaleString('fr-FR', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
-                            : 'Initiale'}
+                          {safeFormatDateTime(health.last_sync_at, 'Initiale')}
                         </span>
                       </div>
                     </div>

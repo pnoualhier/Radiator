@@ -10,6 +10,7 @@ import {
   CartesianGrid,
 } from 'recharts';
 import type { Measurement, StationStatistics } from '../types/radiation';
+import { safeFormatDate } from '../utils/dateUtils';
 
 interface RadiationChartProps {
   measurements: Measurement[];
@@ -34,9 +35,10 @@ export const RadiationChart: React.FC<RadiationChartProps> = ({
   // Format data points for Recharts
   const chartData = measurements.map(m => {
     const d = new Date(m.measured_at);
+    const validTime = isNaN(d.getTime()) ? 0 : d.getTime();
     return {
-      timestamp: d.getTime(),
-      formattedTime: d.toLocaleDateString('fr-FR', {
+      timestamp: validTime,
+      formattedTime: safeFormatDate(m.measured_at, {
         day: '2-digit',
         month: '2-digit',
         hour: '2-digit',

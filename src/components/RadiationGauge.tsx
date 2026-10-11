@@ -1,5 +1,7 @@
 import React from 'react';
 import { Activity, ShieldCheck, Info, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { QualityBadge } from './QualityBadge';
+import type { QualityStatus } from '../utils/quality';
 
 interface RadiationGaugeProps {
   value: number; // in nSv/h
@@ -9,6 +11,10 @@ interface RadiationGaugeProps {
   isSimulated?: boolean;
   className?: string;
   showContext?: boolean;
+  measuredAt?: string | null;
+  qualityStatus?: QualityStatus | string;
+  sourceCode?: string;
+  measurementType?: string;
 }
 
 export const RadiationGauge: React.FC<RadiationGaugeProps> = ({
@@ -19,6 +25,10 @@ export const RadiationGauge: React.FC<RadiationGaugeProps> = ({
   isSimulated = false,
   className = '',
   showContext = true,
+  measuredAt,
+  qualityStatus,
+  sourceCode,
+  measurementType,
 }) => {
   // Scientific classification according to IRSN French background baseline
   if (dataNature === 'UNAVAILABLE') {
@@ -115,14 +125,30 @@ export const RadiationGauge: React.FC<RadiationGaugeProps> = ({
         </div>
       </div>
 
-      <div className="mt-2 flex items-baseline gap-2">
-        <span className="font-mono text-3xl md:text-4xl font-bold tracking-tight text-white">
-          {value.toFixed(1)}
-        </span>
-        <span className="text-sm font-semibold text-slate-400 font-mono">{unit}</span>
-        <span className="text-xs text-slate-500">
-          ({(value / 1000).toFixed(3)} µSv/h)
-        </span>
+      <div className="mt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-3xl md:text-4xl font-bold tracking-tight text-white">
+            {value.toFixed(1)}
+          </span>
+          <span className="text-sm font-semibold text-slate-400 font-mono">{unit}</span>
+          <span className="text-xs text-slate-500 font-mono">
+            ({(value / 1000).toFixed(3)} µSv/h)
+          </span>
+        </div>
+
+        {measuredAt && (
+          <div className="shrink-0">
+            <QualityBadge
+              measuredAt={measuredAt}
+              qualityStatus={qualityStatus}
+              sourceCode={sourceCode}
+              measurementType={measurementType}
+              dataNature={dataNature}
+              variant="full"
+              align="right"
+            />
+          </div>
+        )}
       </div>
 
       {/* Demo warning disclaimer */}
@@ -145,8 +171,8 @@ export const RadiationGauge: React.FC<RadiationGaugeProps> = ({
         </div>
         <div className="mt-1 flex justify-between text-[10px] font-mono text-slate-500">
           <span>0 nSv/h</span>
-          <span>150 (moyenne nat.)</span>
-          <span>300 (granit)</span>
+          <span>120 (médiane nat.)</span>
+          <span>250 (granite)</span>
           <span>500+</span>
         </div>
       </div>

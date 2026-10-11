@@ -31,6 +31,16 @@
   justify-content: center !important;
 }
 
+.radiation-cluster-marker {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.leaflet-cluster-anim .leaflet-marker-icon, .leaflet-cluster-anim .leaflet-marker-shadow {
+  transition: transform 0.25s ease-out, opacity 0.25s ease-in;
+}
+
 /* Mobile safe area padding for bottom bar */
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom, 8px);

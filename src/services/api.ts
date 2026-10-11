@@ -7,10 +7,13 @@ import type {
   Source,
   OfficialAlert,
   SourceHealth,
+  NetworkHealthSummary,
   MeasurementTypeInfo,
+  StationsCompareResponse,
+  AuditTimestamps,
 } from '../types/radiation';
 import { MEASUREMENT_TYPES_CATALOG } from '../types/radiation';
-import { db } from '../offline/db';
+import { db, saveAuditTimestamps, getAuditTimestamps } from '../offline/db';
 
 const BASE_URL = '/api/v1';
 
@@ -18,11 +21,12 @@ export interface ApiResponse<T> {
   data: T;
   isCached: boolean;
   timestamp: string;
+  timestamps?: AuditTimestamps;
 }
 
 export class ApiService {
   /**
-   * Helper for network request with automatic IndexedDB fallback
+   * Helper for network request with automatic IndexedDB fallback and granular 4-timestamp audit
    */
   private static async fetchWithOfflineFallback<T>(
     endpoint: string,
@@ -33,11 +37,56 @@ export class ApiService {
       const response = await fetch(`${BASE_URL}${endpoint}`);
       if (response.ok) {
         const data = (await response.json()) as T;
-        const now = new Date().toISOString();
+        const cacheNow = new Date().toISOString();
+        const serverTimestamp =
+          response.headers.get('x-server-timestamp') ||
+          (data as any)?.server_timestamp ||
+          cacheNow;
+
+        // Extract finest data_timestamp and source_timestamp from payload
+        let dataTimestamp: string | undefined = (data as any)?.data_timestamp;
+        let sourceTimestamp: string | undefined = (data as any)?.source_timestamp;
+
+        if (!dataTimestamp && Array.isArray(data) && data.length > 0) {
+          // Scan for most recent measurement time in the dataset
+          for (const item of data) {
+            const mAt =
+              item?.latest_measurement?.data_timestamp ||
+              item?.latest_measurement?.measured_at ||
+              item?.data_timestamp ||
+              item?.measured_at;
+            if (mAt) {
+              if (!dataTimestamp || new Date(mAt).getTime() > new Date(dataTimestamp).getTime()) {
+                dataTimestamp = mAt;
+                sourceTimestamp =
+                  item?.latest_measurement?.source_timestamp ||
+                  item?.source_timestamp ||
+                  mAt;
+              }
+            }
+          }
+        }
+
+        const finalDataTimestamp: string = dataTimestamp || serverTimestamp;
+        const finalSourceTimestamp: string = sourceTimestamp || finalDataTimestamp;
+
+        const auditTimestamps: AuditTimestamps = {
+          data_timestamp: finalDataTimestamp,
+          source_timestamp: finalSourceTimestamp,
+          server_timestamp: serverTimestamp,
+          cache_timestamp: cacheNow,
+        };
+
         // Persist to IndexedDB in background
         cacheWriter(data).catch(err => console.warn('Dexie cache write failed:', err));
-        await db.metadata.put({ key: 'last_sync_timestamp', value: now });
-        return { data, isCached: false, timestamp: now };
+        saveAuditTimestamps(auditTimestamps).catch(err => console.warn('Dexie audit timestamp write failed:', err));
+
+        return {
+          data,
+          isCached: false,
+          timestamp: cacheNow,
+          timestamps: auditTimestamps,
+        };
       }
     } catch (networkError) {
       console.info(`Network call to ${endpoint} failed, falling back to IndexedDB:`, networkError);
@@ -45,11 +94,21 @@ export class ApiService {
 
     // Fallback to IndexedDB
     const cachedData = await cacheReader();
-    const meta = await db.metadata.get('last_sync_timestamp');
+    const storedTimestamps = await getAuditTimestamps();
+    const now = new Date().toISOString();
+
+    const auditTimestamps: AuditTimestamps = storedTimestamps || {
+      data_timestamp: now,
+      source_timestamp: now,
+      server_timestamp: now,
+      cache_timestamp: now,
+    };
+
     return {
       data: cachedData,
       isCached: true,
-      timestamp: meta?.value || new Date().toISOString(),
+      timestamp: auditTimestamps.cache_timestamp,
+      timestamps: auditTimestamps,
     };
   }
 
@@ -57,6 +116,8 @@ export class ApiService {
   static async getStations(params?: {
     source?: string;
     measurement_type?: string;
+    observation_mode?: string;
+    radionuclide?: string;
     region?: string;
     department?: string;
     bbox?: string;
@@ -69,6 +130,8 @@ export class ApiService {
     const query = new URLSearchParams();
     if (params?.source) query.set('source', params.source);
     if (params?.measurement_type) query.set('measurement_type', params.measurement_type);
+    if (params?.observation_mode) query.set('observation_mode', params.observation_mode);
+    if (params?.radionuclide) query.set('radionuclide', params.radionuclide);
     if (params?.region) query.set('region', params.region);
     if (params?.department) query.set('department', params.department);
     if (params?.bbox) query.set('bbox', params.bbox);
@@ -90,6 +153,18 @@ export class ApiService {
         if (params?.measurement_type) {
           list = list.filter(s => s.measurement_type === params.measurement_type);
         }
+        if (params?.observation_mode) {
+          const m = params.observation_mode;
+          if (m === 'AMBIENT_GAMMA') {
+            list = list.filter(s => !s.measurement_type || s.measurement_type === 'AMBIENT_GAMMA_DOSE_RATE');
+          } else if (m === 'ATMOSPHERIC_AEROSOLS') {
+            list = list.filter(s => s.source_code === 'OPERA_AIR' || s.measurement_type === 'ATMOSPHERIC_AEROSOLS');
+          } else if (m === 'WATER_RADIOACTIVITY') {
+            list = list.filter(s => s.source_code === 'HYDROTELERAY' || s.measurement_type === 'WATER_RADIOACTIVITY');
+          } else if (m === 'CITIZEN_DATA') {
+            list = list.filter(s => s.source_code === 'OPENRADIATION' || s.source_code === 'SAFECAST');
+          }
+        }
         return list;
       },
       async (stations: Station[]) => {
@@ -107,6 +182,50 @@ export class ApiService {
       console.warn('Failed to fetch measurement types, using offline catalog:', err);
     }
     return Object.values(MEASUREMENT_TYPES_CATALOG);
+  }
+
+  // 1c. OPERA-Air Radionuclides Catalog
+  static async getOperaAirRadionuclides(): Promise<any[]> {
+    try {
+      const res = await fetch(`${BASE_URL}/opera-air/radionuclides`);
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('Failed to fetch OPERA-Air radionuclides:', err);
+    }
+    return [];
+  }
+
+  // 1d. OPERA-Air National Summary
+  static async getOperaAirSummary(): Promise<any> {
+    try {
+      const res = await fetch(`${BASE_URL}/opera-air/summary`);
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('Failed to fetch OPERA-Air summary:', err);
+    }
+    return null;
+  }
+
+  // 1e. HydroTéléray River Surveillance Synthesis
+  static async getHydroteleraySummary(): Promise<any> {
+    try {
+      const res = await fetch(`${BASE_URL}/hydroteleray/summary`);
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('Failed to fetch HydroTéléray summary:', err);
+    }
+    return null;
+  }
+
+  // 1f. HydroTéléray Basins
+  static async getHydrotelerayBasins(): Promise<any[]> {
+    try {
+      const res = await fetch(`${BASE_URL}/hydroteleray/basins`);
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('Failed to fetch HydroTéléray basins:', err);
+    }
+    return [];
   }
 
   // 2. Station Detail
@@ -200,6 +319,63 @@ export class ApiService {
     return { data: null, isCached: true, timestamp: new Date().toISOString() };
   }
 
+  // 5b. Compare Stations (Multi-series metrics and historical chart)
+  static async compareStations(ids: number[] = [1, 7, 8, 11], hours: number = 168): Promise<StationsCompareResponse> {
+    try {
+      const res = await fetch(`${BASE_URL}/stations/compare?ids=${ids.join(',')}&hours=${hours}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn('Failed to fetch station comparison from server:', e);
+    }
+    return {
+      period_hours: hours,
+      stations: [],
+      timeline: [],
+      geological_insights: [],
+    };
+  }
+
+  // 5c. Fast Priority Favorites Refresh (Startup instant sync)
+  static async getFavoritesLatest(ids: number[]): Promise<{
+    duration_ms: number;
+    refreshed_at: string;
+    count: number;
+    favorites: Array<{
+      station_id: number;
+      station_name: string;
+      commune: string;
+      department_code?: string;
+      region_code?: string;
+      nominal: number;
+      is_official: boolean;
+      source_code: string;
+      source_name?: string;
+      measurement: {
+        value: number;
+        unit: string;
+        measured_at: string;
+        quality_status: 'VALID' | 'SUSPECT' | 'MISSING' | 'STALE' | 'INVALID';
+        age_minutes: number;
+      };
+      avg_24h: number;
+      delta_24h: number;
+      trend: 'RISING' | 'FALLING' | 'STABLE';
+    }>;
+  } | null> {
+    try {
+      const qs = ids && ids.length > 0 ? `?ids=${ids.join(',')}` : '';
+      const res = await fetch(`${BASE_URL}/favorites/latest${qs}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn('Failed to fetch fast favorites:', e);
+    }
+    return null;
+  }
+
   // 6. Sources
   static async getSources(): Promise<ApiResponse<Source[]>> {
     return this.fetchWithOfflineFallback<Source[]>(
@@ -211,15 +387,58 @@ export class ApiService {
     );
   }
 
-  // 7. Official Alerts
-  static async getAlerts(): Promise<ApiResponse<OfficialAlert[]>> {
+  // 7. Official Alerts (Strictly via OfficialAlertConnector)
+  static async getAlerts(params?: {
+    status?: string;
+    severity?: string;
+    source?: string;
+  }): Promise<ApiResponse<OfficialAlert[]>> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.severity) query.set('severity', params.severity);
+    if (params?.source) query.set('source', params.source);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+
     return this.fetchWithOfflineFallback<OfficialAlert[]>(
-      '/alerts',
-      async () => db.alerts.toArray(),
+      `/alerts${qs}`,
+      async () => {
+        let list = await db.alerts.toArray();
+        if (params?.status && params.status !== 'ALL') {
+          list = list.filter(a => a.status === params.status);
+        }
+        if (params?.severity && params.severity !== 'ALL') {
+          list = list.filter(a => a.severity === params.severity);
+        }
+        return list;
+      },
       async (alerts: OfficialAlert[]) => {
-        await db.alerts.bulkPut(alerts);
+        if (alerts && alerts.length > 0) {
+          await db.alerts.bulkPut(alerts);
+        }
       }
     );
+  }
+
+  // 7b. Sync Alerts via Official Connector
+  static async syncAlerts(): Promise<any> {
+    try {
+      const res = await fetch(`${BASE_URL}/alerts/sync`, { method: 'POST' });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Failed to trigger alert sync:', e);
+    }
+    return null;
+  }
+
+  // 7c. Alert Connector Status
+  static async getAlertConnectorStatus(): Promise<any> {
+    try {
+      const res = await fetch(`${BASE_URL}/alerts/connector-status`);
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.warn('Failed to fetch alert connector status:', e);
+    }
+    return null;
   }
 
   // 8. Health
@@ -242,6 +461,17 @@ export class ApiService {
       // Offline fallback
     }
     return [];
+  }
+
+  // 9b. Global Network Health Summary
+  static async getNetworkHealthSummary(): Promise<NetworkHealthSummary | null> {
+    try {
+      const res = await fetch(`${BASE_URL}/health/summary`);
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('Failed to fetch network health summary:', err);
+    }
+    return null;
   }
 
   // 10. Admin Sync
