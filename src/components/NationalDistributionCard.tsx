@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { Station } from '../types/radiation';
 import { BarChart3, Info, ShieldCheck, Activity, MapPin } from 'lucide-react';
+import { HelpTooltip } from './HelpTooltip';
 
 interface NationalDistributionCardProps {
   stations: Station[];
@@ -69,6 +70,12 @@ export const NationalDistributionCard: React.FC<NationalDistributionCardProps> =
           <div>
             <h3 className="text-sm font-bold text-white font-mono uppercase tracking-wide flex items-center gap-2">
               <span>Distribution des mesures (Rayonnement ambiant gamma)</span>
+              <HelpTooltip
+                title="Distribution statistique nationale (Quantiles)"
+                position="bottom"
+                align="start"
+                content="Synthèse statistique sur l'ensemble des balises gamma de France. La médiane (P50) représente le niveau central nominal national. L'intervalle interquartile (P25 - P75) regroupe la moitié du territoire (plaines sédimentaires). Les valeurs supérieures correspondent aux massifs géologiques granitiques (Bretagne, Massif Central, Vosges, Corse) naturellement plus radioactifs."
+              />
             </h3>
             <p className="text-[11px] text-slate-400">
               Échantillon métropolitain homogène ({count} balises gamma en nSv/h)

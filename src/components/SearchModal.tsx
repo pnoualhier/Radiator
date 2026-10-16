@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { Station } from '../types/radiation';
 import { searchGeographicZones, type GeoZone } from '../utils/geoSearch';
+import { HelpTooltip } from './HelpTooltip';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -82,6 +83,12 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               autoFocus
               className="flex-1 bg-transparent text-sm sm:text-base text-white placeholder:text-slate-500 focus:outline-hidden font-mono"
             />
+            <HelpTooltip
+              title="Moteur de Recherche Géographique"
+              position="bottom"
+              align="end"
+              content="Recherche multicritère intelligente : saisissez un code postal, un numéro de département (ex: 75, 29), le nom d'une commune ou le nom d'un site pour afficher automatiquement les balises associées et calculer la radioactivité moyenne de la zone."
+            />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
@@ -101,10 +108,16 @@ export const SearchModal: React.FC<SearchModalProps> = ({
 
           {/* Quick Suggestions Chips */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[11px] font-mono text-slate-500 mr-1 flex items-center gap-1">
+            <div className="flex items-center gap-1 text-[11px] font-mono text-slate-500 mr-1">
               <Sparkles className="w-3 h-3 text-amber-400" />
-              Exemples :
-            </span>
+              <span>Exemples :</span>
+              <HelpTooltip
+                title="Suggestions Rapides"
+                position="top"
+                align="start"
+                content="Cliquez sur un exemple représentatif pour visualiser instantanément les zones géologiques contrastées : Limoges/Brest (socle granitique à fond naturel élevé) vs Paris (bassin calcaire) ou Cattenom (surveillance périmétrique INB)."
+              />
+            </div>
             {QUICK_SUGGESTIONS.map(sug => (
               <button
                 key={sug}

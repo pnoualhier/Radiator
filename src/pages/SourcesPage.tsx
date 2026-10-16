@@ -4,6 +4,7 @@ import { ApiService } from '../services/api';
 import { Database, ShieldCheck, Users, ExternalLink, RefreshCw, Key, CheckCircle, Clock } from 'lucide-react';
 import { SyncAdminModal } from '../components/SyncAdminModal';
 import { safeFormatDateTime } from '../utils/dateUtils';
+import { HelpTooltip } from '../components/HelpTooltip';
 
 export const SourcesPage: React.FC = () => {
   const [sources, setSources] = useState<Source[]>([]);
@@ -36,30 +37,53 @@ export const SourcesPage: React.FC = () => {
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white font-mono flex items-center gap-2">
-            <Database className="w-6 h-6 text-amber-400" />
-            SOURCES ET RÉSEAUX RADIOLOGIQUES
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-white font-mono flex items-center gap-2">
+              <Database className="w-6 h-6 text-amber-400" />
+              SOURCES ET RÉSEAUX RADIOLOGIQUES
+            </h1>
+            <HelpTooltip
+              title="Répertoire des Réseaux Télémétriques"
+              position="bottom"
+              align="start"
+              content="Inventaire exhaustif des réseaux télémétriques ingérés par l'application : flux certifiés d'État (Téléray, OPERA-Air), surveillance européenne (EURDEP) et réseaux de sciences citoyennes (OpenRadiation, Safecast). Garantit la traçabilité des données et le respect des licences Open Data."
+            />
+          </div>
           <p className="text-xs text-slate-400 mt-1 max-w-xl">
             Transparence sur les réseaux télémétriques, licences de réutilisation et statut des connecteurs.
           </p>
         </div>
 
-        <button
-          onClick={() => setIsAdminModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3.5 py-2 text-xs font-semibold text-white transition shadow-sm w-fit"
-        >
-          <Key className="w-3.5 h-3.5 text-amber-400" />
-          <span>Synchronisation manuelle (Admin)</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsAdminModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3.5 py-2 text-xs font-semibold text-white transition shadow-sm w-fit"
+          >
+            <Key className="w-3.5 h-3.5 text-amber-400" />
+            <span>Synchronisation manuelle (Admin)</span>
+          </button>
+          <HelpTooltip
+            title="Administration des Synchronisations"
+            position="left"
+            content="Permet aux administrateurs et analystes de forcer le déclenchement des collecteurs Téléray et OpenRadiation en direct via jeton d'authentification API."
+          />
+        </div>
       </div>
 
       {/* 3 Pillars Architecture Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="rounded-xl border border-emerald-800/60 bg-emerald-950/20 p-3.5">
-          <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs font-mono">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-            <span>🟢 Pôle Institutionnel</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs font-mono">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+              <span>🟢 Pôle Institutionnel</span>
+            </div>
+            <HelpTooltip
+              title="Pôle Institutionnel de Référence"
+              position="bottom"
+              align="end"
+              content="Téléray (ASNR / IRSN) : Réseau national officiel de référence de l'État français. Balises fixes permanentes sous assurance qualité certifiée COFRAC, avec transmission 24h/24 pour l'alerte de sécurité civile."
+            />
           </div>
           <p className="text-[11px] text-slate-300 mt-1">
             <strong>Téléray (ASNR / IRSN)</strong> : Réseau national officiel de référence de l'État français. Balises fixes permanentes sous assurance qualité certifiée.
@@ -67,9 +91,17 @@ export const SourcesPage: React.FC = () => {
         </div>
 
         <div className="rounded-xl border border-purple-800/60 bg-purple-950/20 p-3.5">
-          <div className="flex items-center gap-2 text-purple-400 font-bold text-xs font-mono">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-            <span>🟣 Pôle Participatif</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-purple-400 font-bold text-xs font-mono">
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+              <span>🟣 Pôle Participatif</span>
+            </div>
+            <HelpTooltip
+              title="Pôle Participatif Citoyen"
+              position="bottom"
+              align="end"
+              content="OpenRadiation : Science citoyenne et collaborative (IRSN, Sorbonne Université, ANCCLI, FabLabs). Capteurs portables et stations communautaires (R-Kit, bGeigie) apportant un maillage de proximité."
+            />
           </div>
           <p className="text-[11px] text-slate-300 mt-1">
             <strong>OpenRadiation</strong> : Sciences participatives citoyennes (IRSN, Sorbonne, ANCCLI, FabLabs). Capteurs mobiles et fixes (R-Kit, bGeigie).
@@ -77,9 +109,17 @@ export const SourcesPage: React.FC = () => {
         </div>
 
         <div className="rounded-xl border border-sky-800/60 bg-sky-950/20 p-3.5">
-          <div className="flex items-center gap-2 text-sky-400 font-bold text-xs font-mono">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
-            <span>🔵 Pôle International</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sky-400 font-bold text-xs font-mono">
+              <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+              <span>🔵 Pôle International</span>
+            </div>
+            <HelpTooltip
+              title="Pôle International & Transfrontalier"
+              position="bottom"
+              align="end"
+              content="EURDEP (Commission Européenne JRC) & Safecast : Échange radiologique transfrontalier automatisé entre pays européens et réseau mondial de dosimétrie ouverte post-Fukushima."
+            />
           </div>
           <p className="text-[11px] text-slate-300 mt-1">
             <strong>EURDEP (JRC UE) & Safecast</strong> : Surveillance transfrontalière aux frontières françaises et réseau mondial de capteurs ouverts.
@@ -95,12 +135,20 @@ export const SourcesPage: React.FC = () => {
               <Users className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white font-mono flex items-center gap-2">
-                <span>FOCUS : OPENRADIATION & LA MESURE CITOYENNE</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  Temps Réel
-                </span>
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-white font-mono flex items-center gap-2">
+                  <span>FOCUS : OPENRADIATION & LA MESURE CITOYENNE</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    Temps Réel
+                  </span>
+                </h2>
+                <HelpTooltip
+                  title="Dispositif Participatif OpenRadiation"
+                  position="bottom"
+                  align="start"
+                  content="Plateforme citoyenne et collaborative permettant à chacun de mesurer la radioactivité de son environnement avec des capteurs connectés (R-Kit, bGeigie, etc.) et de partager les données sous licence libre ODbL."
+                />
+              </div>
               <p className="text-xs text-slate-300 mt-0.5">
                 Projet collaboratif initié par l'IRSN, Sorbonne Université, l'ANCCLI et les FabLabs pour démocratiser la radioprotection.
               </p>
@@ -184,6 +232,22 @@ export const SourcesPage: React.FC = () => {
                     <span className="font-mono text-[10px] text-slate-500 font-semibold">
                       ({source.code})
                     </span>
+                    <HelpTooltip
+                      title={`Réseau ${source.name}`}
+                      position="bottom"
+                      align="start"
+                      content={
+                        source.code === 'TELERAY'
+                          ? "Réseau national d'alerte de l'État (ASNR / IRSN) comportant 457 balises fixes télémesurées en continu à 1 mètre du sol."
+                          : source.code === 'OPENRADIATION'
+                          ? "Base de données participative citoyenne mondiale recensant des mesures géolocalisées issues de capteurs de citoyens et d'associations."
+                          : source.code === 'EURDEP'
+                          ? "Plateforme d'échange de données radiologiques de la Commission Européenne (JRC) surveillant les débits de dose transfrontaliers."
+                          : source.code === 'SAFECAST'
+                          ? "Réseau mondial de capteurs indépendants ouverts fondé après la catastrophe de Fukushima avec le capteur mobile bGeigie."
+                          : `Flux radiologique exploité par ${source.organization || 'le réseau partenaire'}.`
+                      }
+                    />
                   </div>
 
                   <div className="flex items-center gap-1.5">

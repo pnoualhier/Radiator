@@ -2,6 +2,7 @@ import React from 'react';
 import type { ObservationMode } from '../types/radiation';
 import { OBSERVATION_MODES } from '../types/radiation';
 import { Radio, Wind, Droplets, Users, Layers, Info, Filter, Sparkles } from 'lucide-react';
+import { HelpTooltip } from './HelpTooltip';
 
 interface ObservationModeSelectorProps {
   selectedMode: ObservationMode;
@@ -143,6 +144,12 @@ export const ObservationModeSelector: React.FC<ObservationModeSelectorProps> = (
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">
             <span className="flex h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
             <span>Sélecteur Métrologique Territorial</span>
+            <HelpTooltip
+              title="Filtrage par vecteur métrologique"
+              position="bottom"
+              align="start"
+              content="Permet d'isoler le type de surveillance souhaité. Le rayonnement ambiant externe (Téléray) mesure le débit immédiat en nSv/h. Les aérosols (OPERA-Air) quantifient l'activité en Bq/m³. Les eaux (HydroTéléray) mesurent le tritium en Bq/L. Les sciences citoyennes enrichissent le maillage territorial en µSv/h."
+            />
           </div>
           <h2 className="text-xl md:text-2xl font-black text-white font-mono tracking-tight mt-1 flex items-center gap-2">
             <span>☢️ QUE SOUHAITEZ-VOUS OBSERVER ?</span>

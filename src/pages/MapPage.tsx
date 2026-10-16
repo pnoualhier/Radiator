@@ -6,6 +6,7 @@ import { ObservationModeSelector } from '../components/ObservationModeSelector';
 import { QualityBadge } from '../components/QualityBadge';
 import { OperaAirPanel } from '../components/OperaAirPanel';
 import { HydrotelerayPanel } from '../components/HydrotelerayPanel';
+import { HelpTooltip } from '../components/HelpTooltip';
 import { Radio, MapPin, Calendar, ExternalLink, ShieldCheck, Users, Layers, Wind, Droplets, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import type { GeoZone } from '../utils/geoSearch';
 import { safeFormatDateTime } from '../utils/dateUtils';
@@ -71,6 +72,12 @@ export const MapPage: React.FC<MapPageProps> = ({
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-amber-400">
             <Layers className="w-4 h-4" />
             <span>CARTE MULTI-ENVIRONNEMENT : AIR • EAU • SOL / PARTICIPATIF</span>
+            <HelpTooltip
+              title="Cartographie des réseaux de mesure"
+              position="bottom"
+              align="start"
+              content="Visualisation cartographique des sondes réparties sur le territoire français. Les balises changent de couleur selon leur niveau d'activité (bleu < 75 nSv/h, vert, ambre, rouge > 170 nSv/h). Utilisez les calques pour activer la nappe d'interpolation ou la géolocalisation."
+            />
           </div>
 
           <button
@@ -119,6 +126,12 @@ export const MapPage: React.FC<MapPageProps> = ({
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   Mesures en direct
                 </span>
+                <HelpTooltip
+                  title="Focalisation géographique territoriale"
+                  position="bottom"
+                  align="start"
+                  content="Regroupe l'ensemble des balises de surveillance implantées dans ce bassin ou département. Calcule en direct le débit moyen et la fourchette d'exposition selon la géologie locale sous-jacente."
+                />
               </div>
               <div className="text-slate-300 text-[11px] mt-0.5">
                 {activeZone.averageDoseRate !== undefined ? (
@@ -194,6 +207,12 @@ export const MapPage: React.FC<MapPageProps> = ({
                     🌐 {selectedStation.source_name || selectedStation.source_code}
                   </span>
                 )}
+                <HelpTooltip
+                  title="Fiche résumé de la station sélectionnée"
+                  position="top"
+                  align="start"
+                  content="Présente la dernière valeur télémétrique reçue pour cette sonde, son appartenance à un réseau officiel ou participatif, son indice de qualité et permet d'accéder à l'historique complet sur 24h à 1 an."
+                />
               </div>
 
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1">

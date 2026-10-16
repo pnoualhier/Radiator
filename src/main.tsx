@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ThemeProvider } from './context/ThemeContext';
 import './index.css';
 
 console.log('[RadioFrance:Init] 🚀 Démarrage du point d\'entrée principal (main.tsx)...');
@@ -51,7 +52,9 @@ try {
   const root = createRoot(target);
   root.render(
     <ErrorBoundary>
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </ErrorBoundary>
   );
   console.log('[RadioFrance:Init] ✅ createRoot.render() exécuté avec succès.');

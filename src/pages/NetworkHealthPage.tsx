@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ApiService } from '../services/api';
+import { HelpTooltip } from '../components/HelpTooltip';
 import type { SourceHealth, NetworkHealthSummary } from '../types/radiation';
 import {
   Activity,
@@ -89,7 +90,13 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white font-mono flex items-center gap-2.5">
               <Activity className="w-7 h-7 text-emerald-400" />
-              SANTÉ DU RÉSEAU & FLUX DE DONNÉES
+              <span>SANTÉ DU RÉSEAU & FLUX DE DONNÉES</span>
+              <HelpTooltip
+                title="Supervision télémétrique nationale"
+                position="bottom"
+                align="start"
+                content="Tableau de bord de contrôle opérationnel des 6 passerelles métrologiques : disponibilité en temps réel des sondes Téléray (ASNR), volumétrie d'ingestion quotidienne, temps de latence réseau et statut des liaisons partenaires (OPERA-Air, HydroTéléray, EURDEP, OpenRadiation, Safecast)."
+              />
             </h1>
             <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
               Tableau de bord de surveillance en temps réel de l'état des liaisons métrologiques d'État (Téléray, OPERA-Air, HydroTéléray) et des réseaux partenaires européens et participatifs.
@@ -121,9 +128,17 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* 1. Stations Téléray */}
           <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-              <Radio className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Stations Téléray</span>
+            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Radio className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Stations Téléray</span>
+              </span>
+              <HelpTooltip
+                title="Réseau institutionnel Téléray"
+                position="top"
+                align="end"
+                content="Parc national officiel des balises fixes permanentes sous convention avec les préfectures, centres nucléaires et aéroports de France métropolitaine."
+              />
             </div>
             <div className="text-3xl font-black font-mono text-white pt-1">
               {summary?.teleray_total_stations ?? (teleraySource?.total_stations || 457)}
@@ -135,9 +150,17 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
 
           {/* 2. Mesures reçues aujourd'hui */}
           <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-sky-400" />
-              <span>Mesures reçues aujourd'hui</span>
+            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-sky-400" />
+                <span>Mesures reçues</span>
+              </span>
+              <HelpTooltip
+                title="Volume d'ingestion quotidien"
+                position="top"
+                align="end"
+                content="Nombre cumulé de relevés validés depuis 00h00 UTC. Le pas d'échantillonnage nominal de Téléray est de 10 minutes par balise, soit ~144 mesures par jour et par station."
+              />
             </div>
             <div className="text-3xl font-black font-mono text-sky-400 pt-1">
               {(summary?.today_measurements_received ?? 65320).toLocaleString('fr-FR')}
@@ -149,9 +172,17 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
 
           {/* 3. Stations sans données */}
           <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-              <span>Stations sans données</span>
+            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                <span>Stations sans données</span>
+              </span>
+              <HelpTooltip
+                title="Balises en attente de télétransmission"
+                position="top"
+                align="end"
+                content="Balises n'ayant pas émis depuis plus de 2 heures (maintenance préventive de la sonde, rupture temporaire de liaison cellulaire GSM ou travaux sur site)."
+              />
             </div>
             <div className="text-3xl font-black font-mono text-amber-400 pt-1">
               {summary?.teleray_offline_stations ?? (teleraySource?.offline_stations ?? 4)}
@@ -163,9 +194,17 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
 
           {/* 4. Dernière synchronisation */}
           <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Dernière synchronisation</span>
+            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Dernière synchro</span>
+              </span>
+              <HelpTooltip
+                title="Horodatage du dernier cycle d'ingestion"
+                position="top"
+                align="end"
+                content="Moment de la dernière consolidation réussie par le moteur d'ingestion central. Le taux de disponibilité opérationnelle dépasse 99% sur l'ensemble de l'année."
+              />
             </div>
             <div className="text-3xl font-black font-mono text-emerald-400 pt-1">
               {summary?.last_sync_timestamp || '10:42:17'}

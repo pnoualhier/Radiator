@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Station } from '../types/radiation';
 import type { FavoriteItemData } from '../hooks/useFavorites';
+import { HelpTooltip } from './HelpTooltip';
 import {
   Star,
   RefreshCw,
@@ -78,6 +79,12 @@ export const FavoriteStationsSection: React.FC<FavoriteStationsSectionProps> = (
               <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-950 border border-amber-800 text-amber-300 font-bold">
                 {favoriteIds.length}
               </span>
+              <HelpTooltip
+                title="Stations favorites surveillées"
+                position="bottom"
+                align="start"
+                content="Zone dédiée à vos balises surveillées prioritaires. Au lancement de l'application, ces stations sont interrogées et synchronisées en priorité absolue avant le reste du réseau, garantissant des débits immédiats même sur connexion restreinte."
+              />
             </h2>
             <p className="text-[11px] text-slate-400">
               Synchronisation prioritaire ultra-rapide au démarrage de la PWA
@@ -94,15 +101,23 @@ export const FavoriteStationsSection: React.FC<FavoriteStationsSectionProps> = (
             </span>
           )}
 
-          <button
-            onClick={onFastRefresh}
-            disabled={isFastRefreshing}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono transition"
-            title="Actualiser immédiatement mes stations favorites"
-          >
-            <RefreshCw className={`w-3 h-3 text-amber-400 ${isFastRefreshing ? 'animate-spin' : ''}`} />
-            <span className="text-[11px]">{isFastRefreshing ? 'Actualisation...' : 'Actualiser'}</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={onFastRefresh}
+              disabled={isFastRefreshing}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white text-xs font-mono transition"
+              title="Actualiser immédiatement mes stations favorites"
+            >
+              <RefreshCw className={`w-3 h-3 text-amber-400 ${isFastRefreshing ? 'animate-spin' : ''}`} />
+              <span className="text-[11px]">{isFastRefreshing ? 'Actualisation...' : 'Actualiser'}</span>
+            </button>
+            <HelpTooltip
+              title="Actualisation prioritaire ciblée"
+              position="bottom"
+              align="end"
+              content="Déclenche une requête optimisée ciblant uniquement vos balises favorites. Mesure la latence en millisecondes et met à jour le cache local Dexie instantanément."
+            />
+          </div>
         </div>
       </div>
 

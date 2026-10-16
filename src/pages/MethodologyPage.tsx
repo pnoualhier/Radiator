@@ -19,6 +19,7 @@ import {
   Compass,
   FileCheck2,
 } from 'lucide-react';
+import { HelpTooltip } from '../components/HelpTooltip';
 
 export const MethodologyPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('all');
@@ -29,9 +30,17 @@ export const MethodologyPage: React.FC = () => {
       <div className="rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 p-6 md:p-8 shadow-2xl relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
           <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 px-3 py-1 text-xs font-mono font-semibold text-amber-400">
-              <BookOpen className="w-3.5 h-3.5" /> MÉTHODOLOGIE & RADIOPROTECTION
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 px-3 py-1 text-xs font-mono font-semibold text-amber-400">
+                <BookOpen className="w-3.5 h-3.5" /> MÉTHODOLOGIE & RADIOPROTECTION
+              </span>
+              <HelpTooltip
+                title="Méthodologie de Radioprotection"
+                position="bottom"
+                align="start"
+                content="Guide scientifique et pédagogique officiel expliquant les grandeurs physiques de la radioactivité, l'influence majeure de la géologie et de la météo (pluie/radon), et la complémentarité entre réseaux d'État (Téléray) et capteurs citoyens."
+              />
+            </div>
             <h1 className="mt-3 text-2xl md:text-4xl font-extrabold tracking-tight text-white font-mono">
               Méthodologie de Surveillance
             </h1>
@@ -41,9 +50,16 @@ export const MethodologyPage: React.FC = () => {
           </div>
 
           <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 max-w-xs text-xs font-mono text-amber-200/90">
-            <div className="font-bold text-amber-300 flex items-center gap-1.5 mb-1 text-[11px] uppercase tracking-wide">
-              <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Doctrine d'État ASNR / IRSN</span>
+            <div className="font-bold text-amber-300 flex items-center justify-between mb-1 text-[11px] uppercase tracking-wide">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Doctrine d'État ASNR / IRSN</span>
+              </div>
+              <HelpTooltip
+                title="Doctrine Officielle IRSN / ASNR"
+                position="left"
+                content="L'Autorité de Sûreté Nucléaire et de Radioprotection (ASNR / IRSN) rappelle que les variations courantes sur les balises sont d'origine naturelle (pluie lessivant le radon, altitude, roches granitiques) et ne doivent pas être confondues avec des incidents technologiques."
+              />
             </div>
             <p className="text-[11px] leading-relaxed text-slate-300">
               « Les variations naturelles peuvent être importantes selon la géologie locale et les conditions environnementales. »
@@ -52,7 +68,16 @@ export const MethodologyPage: React.FC = () => {
         </div>
 
         {/* Quick Jump Navigation Pills */}
-        <div className="mt-5 flex flex-wrap gap-2 text-xs font-mono">
+        <div className="mt-5 flex flex-wrap items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-1 text-[11px] text-slate-400 mr-1 font-semibold uppercase">
+            <span>Sommaire :</span>
+            <HelpTooltip
+              title="Navigation thématique rapide"
+              position="top"
+              align="start"
+              content="Accédez directement aux 6 piliers fondamentaux de compréhension métrologique : unités, distinction dose/activité, géologie/altitude, lessivage atmosphérique du radon, limites des capteurs et statut des réseaux."
+            />
+          </div>
           <a
             href="#grandeurs-unites"
             className="px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition flex items-center gap-1.5"
@@ -100,9 +125,16 @@ export const MethodologyPage: React.FC = () => {
 
       {/* SECTION 1: DÉBIT DE DOSE ET UNITÉS */}
       <section id="grandeurs-unites" className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 backdrop-blur-xs space-y-4">
-        <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono border-b border-slate-800/80 pb-3">
-          <Gauge className="w-5 h-5 text-amber-400" />
-          <span>1. Qu'est-ce qu'un Débit de Dose ?</span>
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono">
+            <Gauge className="w-5 h-5 text-amber-400" />
+            <span>1. Qu'est-ce qu'un Débit de Dose ?</span>
+          </div>
+          <HelpTooltip
+            title="Grandeurs & Unités Radiologiques"
+            position="left"
+            content="Comprendre le débit de dose ambiant H*(10) exprimé en nSv/h (nanosieverts par heure), son équivalence en µSv/h et la dose cumulée annuelle en mSv/an par rapport aux seuils réglementaires de santé publique."
+          />
         </div>
 
         <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
@@ -162,9 +194,16 @@ export const MethodologyPage: React.FC = () => {
 
       {/* SECTION 2: DOSE VS ACTIVITÉ */}
       <section id="dose-vs-activite" className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 backdrop-blur-xs space-y-4">
-        <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono border-b border-slate-800/80 pb-3">
-          <ArrowRightLeft className="w-5 h-5 text-sky-400" />
-          <span>2. La Différence Fondamentale : Dose (Sievert) vs Activité (Becquerel)</span>
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono">
+            <ArrowRightLeft className="w-5 h-5 text-sky-400" />
+            <span>2. La Différence Fondamentale : Dose (Sievert) vs Activité (Becquerel)</span>
+          </div>
+          <HelpTooltip
+            title="Dose (Sv) vs Activité (Bq)"
+            position="left"
+            content="Distinction capitale en physique nucléaire : le Becquerel (Bq) quantifie l'activité émise par une source (1 désintégration/sec), tandis que le Sievert (Sv) quantifie le risque et l'énergie absorbée par l'organisme biologique."
+          />
         </div>
 
         <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
@@ -216,9 +255,16 @@ export const MethodologyPage: React.FC = () => {
 
       {/* SECTION 3: RAYONNEMENT NATUREL, GÉOLOGIE ET RAYONNEMENT COSMIQUE */}
       <section id="rayonnement-naturel" className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 backdrop-blur-xs space-y-4">
-        <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono border-b border-slate-800/80 pb-3">
-          <Mountain className="w-5 h-5 text-emerald-400" />
-          <span>3. Les Composantes du Bruit de Fond Naturel</span>
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono">
+            <Mountain className="w-5 h-5 text-emerald-400" />
+            <span>3. Les Composantes du Bruit de Fond Naturel</span>
+          </div>
+          <HelpTooltip
+            title="Bruit de Fond Tellurique & Cosmique"
+            position="left"
+            content="En France, le fond naturel varie de 60 à plus de 350 nSv/h. Les massifs granitiques (Bretagne, Massif Central, Vosges) et l'altitude (Alpes, Pyrénées) augmentent naturellement la dose sans aucun danger ni origine industrielle."
+          />
         </div>
 
         <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
@@ -279,9 +325,16 @@ export const MethodologyPage: React.FC = () => {
 
       {/* SECTION 4: PLUIE ET RABATTEMENT DU RADON */}
       <section id="pluie-radon" className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 backdrop-blur-xs space-y-4">
-        <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono border-b border-slate-800/80 pb-3">
-          <CloudRain className="w-5 h-5 text-cyan-400" />
-          <span>4. Pluie et Lessivage du Radon : Pourquoi le débit augmente-t-il lors d'une averse ?</span>
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono">
+            <CloudRain className="w-5 h-5 text-cyan-400" />
+            <span>4. Pluie et Lessivage du Radon : Pourquoi le débit augmente-t-il lors d'une averse ?</span>
+          </div>
+          <HelpTooltip
+            title="Rabattement Atmosphérique (Washout)"
+            position="left"
+            content="Phénomène naturel universel : la pluie rabat au sol les descendants radioactifs du radon (bismuth-214, plomb-214). Cela provoque une hausse temporaire inoffensive de +20% à +80% du débit de dose, qui se résorbe en 2 à 4h."
+          />
         </div>
 
         <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
@@ -327,9 +380,16 @@ export const MethodologyPage: React.FC = () => {
 
       {/* SECTION 5: LIMITES DES CAPTEURS */}
       <section id="limites-capteurs" className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 backdrop-blur-xs space-y-4">
-        <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono border-b border-slate-800/80 pb-3">
-          <Layers className="w-5 h-5 text-purple-400" />
-          <span>5. Limites Métrologiques et Physiques des Capteurs</span>
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono">
+            <Layers className="w-5 h-5 text-purple-400" />
+            <span>5. Limites Métrologiques et Physiques des Capteurs</span>
+          </div>
+          <HelpTooltip
+            title="Limites Métrologiques des Capteurs"
+            position="left"
+            content="Les tubes Geiger-Müller mesurent un débit global mais n'identifient pas les isotopes. Ils subissent aussi des fluctuations statistiques poissonniennes normales (±5 à 10 nSv/h) et des artéfacts météo (foudre, givre)."
+          />
         </div>
 
         <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
@@ -379,9 +439,16 @@ export const MethodologyPage: React.FC = () => {
 
       {/* SECTION 6: INSTITUTIONNEL VS CITOYEN */}
       <section id="sources-donnees" className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 backdrop-blur-xs space-y-4">
-        <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono border-b border-slate-800/80 pb-3">
-          <Radio className="w-5 h-5 text-rose-400" />
-          <span>6. Données Institutionnelles vs Données Citoyennes : Deux Approches Complémentaires</span>
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2.5 text-white font-bold text-lg font-mono">
+            <Radio className="w-5 h-5 text-rose-400" />
+            <span>6. Données Institutionnelles vs Données Citoyennes : Deux Approches Complémentaires</span>
+          </div>
+          <HelpTooltip
+            title="Réseaux Institutionnels vs Citoyens"
+            position="left"
+            content="Tableau d'analyse comparative : certification COFRAC, étalonnage légal et continuité 24h/24 des balises d'État Téléray vs agilité participative, capteurs mobiles de terrain et maillage civil d'OpenRadiation."
+          />
         </div>
 
         <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
@@ -442,6 +509,11 @@ export const MethodologyPage: React.FC = () => {
         <div className="text-white font-bold flex items-center justify-center gap-2">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
           <span>Synthèse pour le citoyen et l'analyste</span>
+          <HelpTooltip
+            title="Doctrine d'Interprétation Citoyenne"
+            position="top"
+            content="Avant d'interpréter une valeur élevée comme anormale, vérifiez toujours : 1° La géologie locale (granite), 2° La météo (pluie rabattant le radon), 3° L'altitude, 4° La tendance sur 7 jours. Une élévation transitoire est naturelle dans 99,9% des cas."
+          />
         </div>
         <p className="text-slate-400 max-w-2xl mx-auto text-[11px] leading-relaxed">
           Toute observation ponctuelle doit être confrontée au bruit de fond géologique de la commune, à l'historique sur 7 jours et aux conditions météorologiques (pluie) avant de conclure à une anomalie.

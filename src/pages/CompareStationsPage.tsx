@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import type { Station, StationsCompareResponse, ComparedStationItem } from '../types/radiation';
 import { ApiService } from '../services/api';
+import { HelpTooltip } from '../components/HelpTooltip';
 import {
   ResponsiveContainer,
   LineChart,
@@ -121,7 +122,13 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
               </span>
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white font-mono flex items-center gap-2.5">
-              COMPARAISON & CONTRASTES GÉOLOGIQUES
+              <span>COMPARAISON & CONTRASTES GÉOLOGIQUES</span>
+              <HelpTooltip
+                title="Comparateur territorial géologique"
+                position="bottom"
+                align="start"
+                content="Permet d'aligner temporellement jusqu'à 6 stations de régions différentes pour comprendre pourquoi deux localités françaises affichent des valeurs normales distinctes. La nature du socle géologique (granite vs calcaire) et l'altitude expliquent 95% des écarts territoriaux observés."
+              />
             </h1>
             <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
               Superposez en temps réel les mesures et métriques de plusieurs balises gamma pour visualiser l'impact de la géologie naturelle (granite vs calcaire) et les variations métrologiques du territoire.
@@ -152,6 +159,12 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
             >
               🏛️ Plaines sédimentaires
             </button>
+            <HelpTooltip
+              title="Préréglages de comparaison"
+              position="bottom"
+              align="end"
+              content="Sélections préconfigurées pour comparer directement les extrêmes naturels : trio national de référence, socles granitiques anciens (Limousin, Bretagne, Vosges ~120-150 nSv/h) vs plaines sédimentaires calcaires (Bassin parisien, Aquitaine ~70-90 nSv/h)."
+            />
           </div>
         </div>
 
@@ -253,6 +266,12 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
             <h2 className="text-base font-bold text-white font-mono uppercase tracking-wide flex items-center gap-2">
               <Activity className="w-5 h-5 text-amber-400" />
               <span>Graphique multi-courbes synchronisé</span>
+              <HelpTooltip
+                title="Superposition multi-courbes synchronisée"
+                position="bottom"
+                align="start"
+                content="Trace sur un même axe temporel les débits de dose de chaque balise sélectionnée. Permet de comparer la régularité du fond naturel et de vérifier si une hausse ponctuelle est locale (ex: pluie isolée) ou généralisée."
+              />
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
               Superposition continue du débit de dose ambiant (nSv/h)
@@ -401,6 +420,12 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
           <h2 className="text-base font-bold text-white font-mono uppercase tracking-wide flex items-center gap-2">
             <GitCompare className="w-5 h-5 text-amber-400" />
             <span>Tableau comparatif des métriques clés</span>
+            <HelpTooltip
+              title="Tableau des indicateurs statistiques"
+              position="bottom"
+              align="start"
+              content="Matrice comparative détaillée : dernière valeur instantanée, moyennes glissantes 24h et 7j, extremums (minimum/maximum), valeur médiane, écart d'évolution en pourcentage et fraîcheur temporelle de la donnée télémétrique."
+            />
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
             Dernière mesure, moyennes glissantes 24h & 7j, extremums, médiane, évolution et fraîcheur
@@ -528,9 +553,17 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
 
       {/* 🎓 Pedagogical Geological Insights Card */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 space-y-4">
-        <div className="flex items-center gap-2 text-white font-mono font-bold text-sm">
-          <Sparkles className="w-4 h-4 text-amber-400" />
-          <span>Comprendre les écarts métrologiques observés</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-white font-mono font-bold text-sm">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Comprendre les écarts métrologiques observés</span>
+          </div>
+          <HelpTooltip
+            title="Analyse physique des contrastes territoriaux"
+            position="top"
+            align="end"
+            content="Synthèse pédagogique rédigée selon les principes de l'ASNR : décrypte les causes naturelles des contrastes régionaux, notamment la composition isotopique des granites hercyniens (uranium, thorium, potassium-40) face aux roches sédimentaires carbonatées."
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed text-slate-300">

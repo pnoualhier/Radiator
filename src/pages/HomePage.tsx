@@ -7,6 +7,7 @@ import { QualityBadge } from '../components/QualityBadge';
 import { OperaAirPanel } from '../components/OperaAirPanel';
 import { HydrotelerayPanel } from '../components/HydrotelerayPanel';
 import { FavoriteStationsSection } from '../components/FavoriteStationsSection';
+import { HelpTooltip } from '../components/HelpTooltip';
 import type { FavoriteItemData } from '../hooks/useFavorites';
 import {
   safeFormatTime,
@@ -145,7 +146,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               )}
             </div>
             <h1 className="mt-2 text-2xl md:text-4xl font-extrabold tracking-tight text-white font-mono">
-              RADIO FRANCE
+              RADIATION FRANCE
             </h1>
             <p className="mt-1 text-xs md:text-sm text-slate-400 max-w-xl">
               Consultez en direct les deux niveaux de surveillance radiologique d'État : le <strong>débit gamma ambiant (Téléray)</strong> et la <strong>recherche de radionucléides dans l'atmosphère (OPERA-Air)</strong>.
@@ -165,7 +166,15 @@ export const HomePage: React.FC<HomePageProps> = ({
         {auditTimestamps && (
           <div className="mt-4 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-xs font-mono">
             <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 mb-2">
-              <span className="text-slate-500 uppercase tracking-wider font-semibold">Traçabilité & Horodatage</span>
+              <span className="text-slate-500 uppercase tracking-wider font-semibold flex items-center gap-1.5">
+                <span>Traçabilité & Horodatage</span>
+                <HelpTooltip
+                  title="Traçabilité de la mesure (Audit 3 étapes)"
+                  position="bottom"
+                  align="start"
+                  content="Chaîne de confiance à 3 niveaux : 1) Horodatage de détection physique sur le capteur, 2) Réception et validation cryptographique par le serveur central, 3) Stockage persistant chiffré dans la base locale Dexie de votre appareil pour fonctionnement hors ligne garanti."
+                />
+              </span>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">
                   {isCached ? 'Mode Cache Local (Dexie)' : 'Mode En Direct (Flux Réseau)'}
@@ -221,6 +230,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <h2 className="text-sm font-semibold text-white">
                   {nearestStation ? 'Station la plus proche' : 'Votre station locale'}
                 </h2>
+                <HelpTooltip
+                  title="Localisation de la station la plus proche"
+                  position="bottom"
+                  align="start"
+                  content="Détermine par calcul géodésique (formule de haversine) la balise de surveillance métrologique active la plus proche de votre position géographique afin d'évaluer le débit de dose gamma ambiant réel à proximité de votre domicile."
+                />
               </div>
               <button
                 onClick={onRequestGeolocation}
@@ -265,7 +280,13 @@ export const HomePage: React.FC<HomePageProps> = ({
 
                 <div className="flex items-center gap-4">
                   <div className="flex flex-col items-end text-right">
-                    <div className="text-[10px] uppercase font-mono text-slate-500">Dernière mesure</div>
+                    <div className="text-[10px] uppercase font-mono text-slate-500 flex items-center gap-1">
+                      <span>Dernière mesure</span>
+                      <HelpTooltip
+                        title="Débit de dose gamma"
+                        content="Exprimé en nSv/h (nanosieverts/h). Représente le champ ambiant continu à 1 mètre du sol. Bruit de fond nominal en France : 70 à 150 nSv/h."
+                      />
+                    </div>
                     <div className="text-2xl md:text-3xl font-mono font-bold text-amber-400">
                       {safeFormatNumber(nearestMeas.value, nearestMeas.value < 1 ? 2 : 1)}{' '}
                       <span className="text-sm font-normal text-slate-400">{nearestMeas.unit || 'nSv/h'}</span>
@@ -315,6 +336,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-white">
                     Vue nationale
                   </h3>
+                  <HelpTooltip
+                    title="Supervision télémétrique nationale"
+                    position="bottom"
+                    align="start"
+                    content="Synthèse opérationnelle en direct : dénombrement des balises Téléray opérationnelles, statut des flux entrants et calcul du taux de disponibilité global des sondes institutionnelles."
+                  />
                 </div>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-300 font-bold">
                   En direct
@@ -384,7 +411,24 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* Quick Action Navigation Grid */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="mt-6 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-mono font-bold text-slate-300 uppercase tracking-wide">
+              <Radio className="w-4 h-4 text-amber-400" />
+              <span>Accès rapide aux modules & vecteurs</span>
+              <HelpTooltip
+                title="Raccourcis modules & matrices physiques"
+                position="bottom"
+                align="start"
+                content="Navigation directe vers les outils spécialisés de l'application : Cartographie nationale, Répertoire des balises, Surveillance des aérosols atmosphériques (OPERA-Air en Bq/m³), Surveillance fluviale (HydroTéléray en Bq/L), Fiches méthodologiques des 7 vecteurs, Registre officiel des alertes INES, Comparateur territorial et Supervision télémétrique."
+              />
+            </div>
+            <span className="text-[11px] font-mono text-slate-500 hidden sm:inline">
+              Sélection rapide
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           <button
             onClick={() => onTabChange('map')}
             className="group flex flex-col items-start p-4 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 hover:bg-slate-800/80 transition text-left shadow"
@@ -509,7 +553,8 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
           </button>
         </div>
-      </section>
+      </div>
+    </section>
 
       {/* Multi-Environment Interactive Architecture Tree Toggle */}
       <div className="space-y-2">
@@ -517,6 +562,12 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-amber-400">
             <Layers className="w-4 h-4" />
             <span>ARCHITECTURE MULTI-ENVIRONNEMENT DE RADIATOR</span>
+            <HelpTooltip
+              title="Surveillance multi-milieux des écosystèmes"
+              position="bottom"
+              align="start"
+              content="Schéma systémique illustrant la complémentarité des 4 vecteurs environnementaux surveillés : l'air atmosphérique (aérosols), l'eau fluviale (cours d'eau), le sol tellurique (débit gamma) et les données participatives citoyennes."
+            />
           </div>
 
           <button
@@ -568,9 +619,17 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* Network Overview Cards: The 3 Pillars Architecture */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-emerald-800/60 bg-emerald-950/20 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>🟢 Pôle Institutionnel</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span>🟢 Pôle Institutionnel</span>
+            </div>
+            <HelpTooltip
+              title="Pôle Institutionnel d'État"
+              position="top"
+              align="end"
+              content="Réseaux officiels exploités par l'Autorité de Sûreté Nucléaire et de Radioprotection (ASNR / IRSN). Comprend Téléray (débit gamma ambiant), OPERA-Air (aérosols en Bq/m³) et HydroTéléray (cours d'eau). Données certifiées à valeur juridique et réglementaire."
+            />
           </div>
           <div className="mt-2 text-2xl font-mono font-bold text-white">
             {stations.filter(s => s.source_code === 'TELERAY' || s.source_code === 'OPERA_AIR' || s.source_code === 'HYDROTELERAY').length} stations d'État
@@ -581,9 +640,17 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="rounded-2xl border border-purple-800/60 bg-purple-950/20 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 font-mono">
-            <span className="w-2 h-2 rounded-full bg-purple-400" />
-            <span>🟣 Pôle Participatif</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 font-mono">
+              <span className="w-2 h-2 rounded-full bg-purple-400" />
+              <span>🟣 Pôle Participatif</span>
+            </div>
+            <HelpTooltip
+              title="Pôle Participatif Citoyen"
+              position="top"
+              align="end"
+              content="Données issues de la communauté OpenRadiation (partenariat IRSN, Sorbonne Université, ANCCLI, FabLabs). Capteurs fixes et mobiles déployés par des citoyens formés, étalonnés et normalisés en temps réel."
+            />
           </div>
           <div className="mt-2 text-2xl font-mono font-bold text-white">
             {stations.filter(s => s.source_code === 'OPENRADIATION').length} capteurs citoyens
@@ -594,9 +661,17 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="rounded-2xl border border-sky-800/60 bg-sky-950/20 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-sky-400 font-mono">
-            <span className="w-2 h-2 rounded-full bg-sky-400" />
-            <span>🔵 Pôle International</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold text-sky-400 font-mono">
+              <span className="w-2 h-2 rounded-full bg-sky-400" />
+              <span>🔵 Pôle International</span>
+            </div>
+            <HelpTooltip
+              title="Pôle International & Transfrontalier"
+              position="top"
+              align="end"
+              content="Flux transfrontaliers EURDEP gérés par le Joint Research Centre (JRC) de la Commission Européenne (Allemagne, Suisse, Belgique, Espagne, Italie) et réseau mondial de capteurs indépendants Safecast."
+            />
           </div>
           <div className="mt-2 text-2xl font-mono font-bold text-white">
             {stations.filter(s => s.source_code === 'EURDEP' || s.source_code === 'SAFECAST').length} stations transfrontalières

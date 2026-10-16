@@ -13,6 +13,10 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { OfflineCenterModal } from './components/OfflineCenterModal';
 import { SearchModal } from './components/SearchModal';
 import { SyncAdminModal } from './components/SyncAdminModal';
+import { HamburgerMenu } from './components/HamburgerMenu';
+import { SystemSettingsModal } from './components/SystemSettingsModal';
+import { LegalDisclaimerModal } from './components/LegalDisclaimerModal';
+import { ContextualTour } from './components/ContextualTour';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -62,6 +66,16 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAdminSyncOpen, setIsAdminSyncOpen] = useState(false);
   const [isOfflineCenterOpen, setIsOfflineCenterOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isDisclaimerOpen, setIsDisclaimerOpen] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('radiation_france_disclaimer_accepted') !== 'true';
+    } catch {
+      return false;
+    }
+  });
 
   // Geolocation
   const { latitude, longitude, loading: isLocating, requestPosition } = useGeolocation();
@@ -172,6 +186,9 @@ export default function App() {
         onRefresh={handleRefresh}
         onNavigateToHealth={() => handleTabChange('health')}
         onOpenOfflineCenter={() => setIsOfflineCenterOpen(true)}
+        onOpenMenu={() => setIsMenuOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenTour={() => setIsTourOpen(true)}
       />
 
       {/* Main Tab Navigation */}
@@ -322,6 +339,38 @@ export default function App() {
         isOpen={isAdminSyncOpen}
         onClose={() => setIsAdminSyncOpen(false)}
         onSyncComplete={handleRefresh}
+      />
+
+      {/* Categorized Hamburger Navigation Menu */}
+      <HamburgerMenu
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        currentTab={currentTab}
+        onTabChange={handleTabChange}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenDisclaimer={() => setIsDisclaimerOpen(true)}
+        onOpenTour={() => setIsTourOpen(true)}
+        onOpenOfflineCenter={() => setIsOfflineCenterOpen(true)}
+      />
+
+      {/* System Settings & Update Management Modal */}
+      <SystemSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onOpenDisclaimer={() => setIsDisclaimerOpen(true)}
+      />
+
+      {/* Legal Mentions & Disclaimer Modal */}
+      <LegalDisclaimerModal
+        isOpen={isDisclaimerOpen}
+        onClose={() => setIsDisclaimerOpen(false)}
+      />
+
+      {/* Contextual Tour & Onboarding */}
+      <ContextualTour
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onNavigateToTab={(tab) => handleTabChange(tab as NavTab)}
       />
     </div>
   );

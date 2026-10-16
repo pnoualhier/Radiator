@@ -33,6 +33,7 @@ import {
   type InterpolatedPointResult,
 } from '../utils/interpolation';
 import { safeFormatDateTime } from '../utils/dateUtils';
+import { HelpTooltip } from './HelpTooltip';
 
 export interface RadiationMapProps {
   stations: Station[];
@@ -827,7 +828,7 @@ export const RadiationMap: React.FC<RadiationMapProps> = ({
         {/* ─── Top-Left: Mode Selector Switcher (User Specification) ─── */}
         <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-w-[calc(100vw-2rem)] sm:max-w-none">
           {/* Main 3-Way Mode Switcher: Stations Réelles vs Distribution Statistique vs Combiné */}
-          <div className="flex items-center p-1 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-2xl backdrop-blur-md text-xs font-mono">
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-2xl backdrop-blur-md text-xs font-mono">
             <button
               onClick={() => setViewMode('STATIONS')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition ${
@@ -867,6 +868,15 @@ export const RadiationMap: React.FC<RadiationMapProps> = ({
               <span className="hidden sm:inline">Vue combinée</span>
               <span className="sm:hidden">Combiné</span>
             </button>
+
+            <div className="pr-1 pl-0.5">
+              <HelpTooltip
+                title="Modes d'affichage cartographique"
+                position="bottom"
+                align="start"
+                content="Bascule entre la télémétrie directe (balises physiques ponctuelles) et l'interpolation géostatistique (surface continue IDW). En mode combiné, les deux couches se superposent pour vérifier immédiatement la cohérence entre la mesure locale et la tendance régionale."
+              />
+            </div>
           </div>
 
           {/* Opacity slider when distribution heatmap is active */}
@@ -883,6 +893,12 @@ export const RadiationMap: React.FC<RadiationMapProps> = ({
                 className="w-20 accent-amber-500 cursor-pointer"
               />
               <span className="font-bold text-amber-300">{Math.round(distributionOpacity * 100)}%</span>
+              <HelpTooltip
+                title="Transparence de la nappe interpolée"
+                position="bottom"
+                align="start"
+                content="Ajuste la transparence du dégradé de chaleur géostatistique pour laisser transparaître le fond de carte géographique (villes, reliefs, frontières)."
+              />
             </div>
           )}
         </div>
@@ -923,6 +939,12 @@ export const RadiationMap: React.FC<RadiationMapProps> = ({
                 <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5" />
                   <span>FILTRES GÉOGRAPHIQUES & RÉSEAUX</span>
+                  <HelpTooltip
+                    title="Filtres multi-sources & temporels"
+                    position="bottom"
+                    align="start"
+                    content="Affinez l'affichage cartographique par réseau (Téléray certifié, OpenRadiation citoyen, Safecast ou EURDEP européen), par statut d'activité en direct, par type de mesure (débit gamma, aérosols, eau) ou par fenêtre temporelle (1h, 24h, 7j)."
+                  />
                 </span>
                 <button
                   onClick={handleResetFilters}
@@ -1198,7 +1220,15 @@ export const RadiationMap: React.FC<RadiationMapProps> = ({
           {showDistribution && (
             <div className="rounded-xl bg-slate-900/95 border border-slate-800 px-3 py-2 text-[10px] font-mono shadow-xl backdrop-blur-md space-y-1">
               <div className="flex items-center justify-between text-slate-300 font-bold">
-                <span>ÉCHELLE DE DISTRIBUTION (IDW)</span>
+                <span className="flex items-center gap-1.5">
+                  <span>ÉCHELLE DE DISTRIBUTION (IDW)</span>
+                  <HelpTooltip
+                    title="Interpolation spatiale IDW"
+                    position="top"
+                    align="start"
+                    content="Estimation mathématique continue par pondération inverse de la distance. Bleu (< 75 nSv/h) : plaines sédimentaires. Vert/Ambre (90-130 nSv/h) : niveau nominal métropolitain. Rouge (> 150 nSv/h) : massifs granitiques anciens naturellement émissifs."
+                  />
+                </span>
                 <span className="text-[9px] text-amber-400 font-normal">Modèle estimé</span>
               </div>
               {/* Continuous color bar */}
@@ -1226,6 +1256,12 @@ export const RadiationMap: React.FC<RadiationMapProps> = ({
             <span className="text-amber-400 font-bold">
               {filteredStations.length} balise{filteredStations.length > 1 ? 's' : ''}
             </span>
+            <HelpTooltip
+              title="Légende des marqueurs"
+              position="top"
+              align="end"
+              content="Cercle vert continu : station institutionnelle Téléray certifiée. Cercle violet en pointillés : capteur citoyen OpenRadiation / Safecast. Cliquez sur n'importe quel marqueur pour afficher sa fiche détaillée et ses mesures récentes."
+            />
           </div>
         </div>
       </div>

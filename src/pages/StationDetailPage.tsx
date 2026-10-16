@@ -5,6 +5,7 @@ import { RadiationChart } from '../components/RadiationChart';
 import { Last24hRadiationChart } from '../components/Last24hRadiationChart';
 import { RadiationGauge } from '../components/RadiationGauge';
 import { WhyThisValuePanel } from '../components/WhyThisValuePanel';
+import { HelpTooltip } from '../components/HelpTooltip';
 import { safeFormatTime, safeFormatDateTime, safeFormatNumber } from '../utils/dateUtils';
 import {
   ArrowLeft,
@@ -154,6 +155,12 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
                   <Radio className="w-3.5 h-3.5" /> 🔵 International ({station.source_name || station.source_code})
                 </span>
               )}
+              <HelpTooltip
+                title="Identité & coordonnées géodésiques"
+                position="bottom"
+                align="start"
+                content="Fiche descriptive de la balise fixe : coordonnées GPS, altitude WGS84, département d'implantation et identifiant unique de transmission télémétrique dans le registre national ASNR."
+              />
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1">
@@ -512,7 +519,15 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
         {/* Technical Metadata Box */}
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-xs flex flex-col justify-between text-xs space-y-2.5">
           <div>
-            <span className="text-[11px] font-mono uppercase text-slate-500">Traçabilité & Horodatage</span>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono uppercase text-slate-500">Traçabilité & Horodatage</span>
+              <HelpTooltip
+                title="Traçabilité métrologique et certification"
+                position="top"
+                align="end"
+                content="Chaîne d'intégrité de la mesure : 1) Horodatage d'échantillonnage sur le détecteur physique, 2) Ingestion sécurisée par le serveur central avec contrôle qualité automatique, 3) Persistance chiffrée dans la base locale Dexie de votre navigateur pour consultation hors connexion."
+              />
+            </div>
             <div className="mt-1.5 space-y-1.5 font-mono text-[11px]">
               <div className="flex items-center justify-between text-slate-300 bg-slate-950/70 px-2 py-1 rounded border border-slate-800/80">
                 <span className="flex items-center gap-1.5 text-amber-400">
@@ -612,7 +627,20 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
 
       {/* Recent Measurements Log Table */}
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-xs">
-        <h3 className="text-sm font-semibold text-white mb-3">Derniers enregistrements vérifiés</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <span>Derniers enregistrements vérifiés</span>
+            <HelpTooltip
+              title="Journal des mesures vérifiées"
+              position="top"
+              align="start"
+              content="Registre historique des 10 derniers relevés horodatés de cette balise. Indique la valeur numérique brute, l'équivalent dosimétrique ou le nucléide recherché, ainsi que le label d'assurance qualité (VALID, AUTO_VALIDATED)."
+            />
+          </h3>
+          <span className="text-[10px] font-mono text-slate-500">
+            Contrôle qualité ASNR
+          </span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
             <thead>

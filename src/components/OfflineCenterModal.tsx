@@ -20,6 +20,7 @@ import {
 import { getOfflineCenterStats, type OfflineCenterStats } from '../offline/db';
 import type { AuditTimestamps } from '../types/radiation';
 import { safeFormatTime, safeFormatDateTime } from '../utils/dateUtils';
+import { HelpTooltip } from './HelpTooltip';
 
 interface OfflineCenterModalProps {
   isOpen: boolean;
@@ -117,6 +118,12 @@ export const OfflineCenterModal: React.FC<OfflineCenterModalProps> = ({
                 <span className="rounded-full bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-mono text-slate-300">
                   IndexedDB
                 </span>
+                <HelpTooltip
+                  title="Résilience & Stockage Local IndexedDB"
+                  position="bottom"
+                  align="start"
+                  content="Ce centre détaille l'état de la base de données locale stockée dans votre navigateur (IndexedDB). Toutes les stations et leurs dernières mesures restent consultables même sans connexion réseau Internet."
+                />
               </div>
 
               {/* Exact Status requested by user */}
@@ -146,37 +153,44 @@ export const OfflineCenterModal: React.FC<OfflineCenterModalProps> = ({
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 border-b border-slate-800/60 pb-2 text-xs font-mono">
-          <button
-            onClick={() => setActiveTab('summary')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition ${
-              activeTab === 'summary'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            Dernières données
-          </button>
-          <button
-            onClick={() => setActiveTab('networks')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition ${
-              activeTab === 'networks'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            Inventaire des réseaux ({stats?.networks?.length ?? 4})
-          </button>
-          <button
-            onClick={() => setActiveTab('chain')}
-            className={`px-3 py-1.5 rounded-xl font-semibold transition ${
-              activeTab === 'chain'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
-          >
-            Chaîne d'horodatage
-          </button>
+        <div className="flex items-center justify-between border-b border-slate-800/60 pb-2 text-xs font-mono">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('summary')}
+              className={`px-3 py-1.5 rounded-xl font-semibold transition ${
+                activeTab === 'summary'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              Dernières données
+            </button>
+            <button
+              onClick={() => setActiveTab('networks')}
+              className={`px-3 py-1.5 rounded-xl font-semibold transition ${
+                activeTab === 'networks'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              Inventaire des réseaux ({stats?.networks?.length ?? 4})
+            </button>
+            <button
+              onClick={() => setActiveTab('chain')}
+              className={`px-3 py-1.5 rounded-xl font-semibold transition ${
+                activeTab === 'chain'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              Chaîne d'horodatage
+            </button>
+          </div>
+          <HelpTooltip
+            title="Diagnostics Hors Connexion"
+            position="left"
+            content="Basculez entre le résumé des données Téléray locales, l'inventaire complet des 4 réseaux synchronisés (stations et mesures en cache) et la traçabilité de la chaîne d'horodatage."
+          />
         </div>
 
         {/* TAB 1: SUMMARY (Exact format specified by user) */}

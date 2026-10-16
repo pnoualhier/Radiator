@@ -69,25 +69,25 @@ export class OfficialAlertConnector {
     {
       code: 'ASNR',
       name: 'Autorité de Sûreté Nucléaire et Radioprotection (ASNR)',
-      feed_url: 'https://www.asn.fr/l-action-de-l-asn/la-surveillance-du-nucleaire/avis-d-incidents',
+      feed_url: 'https://reglementation-controle.asnr.fr/controle/actualites-du-controle',
       protocol: 'Flux d avis d incidents et de sûreté INES',
     },
     {
       code: 'IRSN_TELERAY',
-      name: 'IRSN / Télésurveillance Téléray & OPERA-Air',
-      feed_url: 'https://www.irsn.fr/actualites-et-evenements/avis-et-bulletins',
+      name: 'ASNR / Télésurveillance Téléray & OPERA-Air',
+      feed_url: 'https://teleray.asnr.fr',
       protocol: 'Bulletins de surveillance radiologique environnementale',
     },
     {
       code: 'ECURIE',
       name: 'Commission Européenne — Système ECURIE (Euratom)',
-      feed_url: 'https://remap.jrc.ec.europa.eu/ecurie',
+      feed_url: 'https://remap.jrc.ec.europa.eu',
       protocol: 'European Community Urgent Radiological Information Exchange',
     },
     {
       code: 'PREFECTURE_PPI',
       name: 'Ministère de l Intérieur & Préfectures (Plans PPI)',
-      feed_url: 'https://www.gouvernement.fr/risques/maitriser-le-risque-nucleaire',
+      feed_url: 'https://www.info.gouv.fr/risques/maitriser-le-risque-nucleaire',
       protocol: 'Dispositif national FR-Alert & Consignes PPI',
     },
   ];
@@ -318,7 +318,7 @@ export class OfficialAlertConnector {
         status: 'ACTIVE',
         geographic_scope: 'Territoire national (France métropolitaine et Corse)',
         public_recommendations: 'Situation radiologique environnementale nominale. Aucune mesure de protection requise.',
-        source_document_url: 'https://www.asn.fr/l-action-de-l-asn/la-surveillance-du-nucleaire/avis-d-incidents',
+        source_document_url: 'https://reglementation-controle.asnr.fr/controle/actualites-du-controle',
         published_timestamp: new Date(Date.now() - 4 * 3600000).toISOString(),
       },
       {
@@ -332,7 +332,7 @@ export class OfficialAlertConnector {
         status: 'RESOLVED',
         geographic_scope: 'Régions Auvergne-Rhône-Alpes et Nouvelle-Aquitaine',
         public_recommendations: 'Phénomène météorologique naturel sans danger sanitaire. Radiator rappelle qu une élévation locale sur une balise Téléray ne constitue pas une alerte radiologique.',
-        source_document_url: 'https://www.irsn.fr/actualites-et-evenements/avis-et-bulletins',
+        source_document_url: 'https://teleray.asnr.fr',
         published_timestamp: new Date(Date.now() - 28 * 3600000).toISOString(),
       },
       {
@@ -346,7 +346,7 @@ export class OfficialAlertConnector {
         status: 'RESOLVED',
         geographic_scope: 'Centrale nucléaire de Gravelines (Nord, Hauts-de-France)',
         public_recommendations: 'Incident interne de conformité matérielle résolu sans impact sur l environnement extérieur ni sur les populations.',
-        source_document_url: 'https://www.asn.fr/l-action-de-l-asn/la-surveillance-du-nucleaire/avis-d-incidents',
+        source_document_url: 'https://reglementation-controle.asnr.fr/controle/actualites-du-controle/installations-nucleaires',
         published_timestamp: new Date(Date.now() - 72 * 3600000).toISOString(),
       },
       {
@@ -360,7 +360,7 @@ export class OfficialAlertConnector {
         status: 'RESOLVED',
         geographic_scope: 'Rayon PPI de 20 km autour du site du Tricastin (Drôme / Vaucluse / Ardèche / Gard)',
         public_recommendations: 'Exercice national programmé de sécurité civile terminé. Aucun risque radiologique.',
-        source_document_url: 'https://www.gouvernement.fr/risques/maitriser-le-risque-nucleaire',
+        source_document_url: 'https://www.info.gouv.fr/risques/maitriser-le-risque-nucleaire',
         published_timestamp: new Date(Date.now() - 120 * 3600000).toISOString(),
       },
     ];

@@ -13,6 +13,7 @@ import {
   Layers,
   ArrowRight,
 } from 'lucide-react';
+import { HelpTooltip } from './HelpTooltip';
 
 interface WhyThisValuePanelProps {
   station: Station | StationDetail;
@@ -51,6 +52,12 @@ export const WhyThisValuePanel: React.FC<WhyThisValuePanelProps> = ({
               <span className="rounded-full bg-slate-800 border border-slate-700 px-2 py-0.5 text-[10px] font-mono text-amber-300">
                 Pédagogie ASNR
               </span>
+              <HelpTooltip
+                title="Pédagogie des variations radiologiques"
+                position="bottom"
+                align="start"
+                content="Décompose scientifiquement la mesure en 5 composantes physiques distinctes : Géologie locale (socle rocheux granitique ou calcaire), Météo (lessivage et rabattement du radon par la pluie), Fond tellurique naturel, Rayonnement cosmique d'altitude, et Instrumentation de la sonde. Cela évite d'interpréter automatiquement une fluctuation naturelle comme une contamination."
+              />
             </div>
 
             <p className="text-xs text-slate-400 mt-0.5">

@@ -12,6 +12,7 @@ import {
 import type { Measurement } from '../types/radiation';
 import { safeFormatTime, safeFormatDate, safeFormatNumber } from '../utils/dateUtils';
 import { Clock, TrendingUp, TrendingDown, Minus, Activity, ShieldCheck, AlertCircle } from 'lucide-react';
+import { HelpTooltip } from './HelpTooltip';
 
 interface Last24hRadiationChartProps {
   measurements: Measurement[];
@@ -129,6 +130,12 @@ export const Last24hRadiationChart: React.FC<Last24hRadiationChartProps> = ({
               <span className="rounded-full bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 text-[10px] font-mono font-semibold text-amber-300">
                 Recharts • 24 Heures
               </span>
+              <HelpTooltip
+                title="Profil chronologique 24h (Recharts)"
+                position="bottom"
+                align="start"
+                content="Courbe continue des 24 dernières heures. La ligne de référence en pointillés figure le bruit de fond moyen de la station. Des fluctuations modérées (+-10%) sont habituelles et causées par la météo, la pression atmosphérique ou le lessivage par la pluie."
+              />
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               Profil continu du débit sur 24 heures glissantes • Unité : <span className="font-mono text-amber-300 font-semibold">{unit}</span>

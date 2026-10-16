@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import type { Station, ObservationMode } from '../types/radiation';
 import { ObservationModeSelector } from '../components/ObservationModeSelector';
 import { QualityBadge } from '../components/QualityBadge';
+import { HelpTooltip } from '../components/HelpTooltip';
 import { Search, Radio, ShieldCheck, Users, MapPin, ArrowUpDown, ChevronRight, Activity, Wind, Droplets, Filter, Sparkles, GitCompare, Star } from 'lucide-react';
 
 interface StationsListPageProps {
@@ -99,7 +100,13 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white font-mono flex items-center gap-2">
             <Radio className="w-6 h-6 text-amber-400" />
-            STATIONS & BALISES DU TERRITOIRE
+            <span>STATIONS & BALISES DU TERRITOIRE</span>
+            <HelpTooltip
+              title="Inventaire métrologique national"
+              position="bottom"
+              align="start"
+              content="Répertoire exhaustif de l'ensemble des points d'échantillonnage et de télémesure active en France métropolitaine et Corse : sondes gamma fixes d'ambiance Téléray (ASNR), stations de filtration d'air à grand débit OPERA-Air (IRSN), stations de surveillance des eaux fluviales HydroTéléray et capteurs citoyens OpenRadiation."
+            />
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             {filteredAndSorted.length} stations sélectionnées sur {stations.length} au total (Téléray, OPERA-Air, HydroTéléray, OpenRadiation)
@@ -127,8 +134,16 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Rechercher par station, isotope (Cs-137, Be-7, H-3), commune, département..."
-            className="w-full rounded-xl bg-slate-900 border border-slate-800 pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
+            className="w-full rounded-xl bg-slate-900 border border-slate-800 pl-9 pr-10 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
           />
+          <div className="absolute right-3 top-2.5">
+            <HelpTooltip
+              title="Recherche multi-critères"
+              position="bottom"
+              align="end"
+              content="Recherchez par nom de commune, numéro de département (ex: 75, 87, 29), identifiant de balise, réseau source (Téléray, OPERA, OpenRadiation) ou par isotope analysé (Césium-137, Béryllium-7, Tritium H-3)."
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -157,6 +172,12 @@ export const StationsListPage: React.FC<StationsListPageProps> = ({
               <option value="value">Trier par : Valeur la plus forte</option>
               {userCoords && <option value="distance">Trier par : Distance la plus proche</option>}
             </select>
+            <HelpTooltip
+              title="Critères de tri"
+              position="bottom"
+              align="end"
+              content="Permet d'ordonner la liste par ordre alphabétique, par niveau d'activité radiologique décroissant (pour identifier rapidement les valeurs les plus hautes de France) ou par distance kilométrique si la géolocalisation est activée."
+            />
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { HelpTooltip } from '../components/HelpTooltip';
 import {
   TIMELINE_EVENTS_2026,
   TIMELINE_MONTHS,
@@ -89,8 +90,14 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({ onSelectStationByNam
             <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 px-3 py-1 text-xs font-mono font-semibold text-amber-400">
               <History className="w-3.5 h-3.5" /> CHRONOLOGIE & ANALYSE HISTORIQUE
             </div>
-            <h1 className="mt-3 text-2xl md:text-4xl font-extrabold tracking-tight text-white font-mono">
-              Timeline des Événements
+            <h1 className="mt-3 text-2xl md:text-4xl font-extrabold tracking-tight text-white font-mono flex items-center gap-2.5">
+              <span>Timeline des Événements</span>
+              <HelpTooltip
+                title="Juxtaposition analytique historique"
+                position="bottom"
+                align="start"
+                content="Croise simultanément trois flux : 1) Les télémesures Téléray (pics et hausses locales), 2) Les alertes et avis officiels d'État (ASNR / IRSN, échelle INES), et 3) Les phénomènes météorologiques (lessivage du radon par la pluie, poussières sahariennes, tempêtes solaires). Permet de vérifier si une variation passée était liée à un phénomène naturel ou à un événement technique."
+              />
             </h1>
             <p className="mt-2 text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
               Juxtaposition analytique permanente : <strong>Mesures Téléray</strong> + <strong>Alertes officielles (ASNR / IRSN)</strong> + <strong>Événements environnementaux</strong> pour une traçabilité historique transparente.
@@ -116,28 +123,42 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({ onSelectStationByNam
         </div>
 
         {/* Juxtaposition Concept Banner */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 flex items-center gap-3">
-            <Radio className="w-5 h-5 text-amber-400 shrink-0" />
-            <div>
-              <div className="font-bold text-amber-300">1. Mesure Téléray</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Télémesures & pics enregistrés</div>
-            </div>
+        <div className="mt-6 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <span>Mécanisme de superposition analytique</span>
+              <HelpTooltip
+                title="Juxtaposition des 3 sources analytiques"
+                position="bottom"
+                align="start"
+                content="Permet d'établir des corrélations scientifiquement rigoureuses : lorsqu'une balise Téléray enregistre une hausse ponctuelle, ce module vérifie simultanément si un épisode météorologique (pluie lessivant le radon) ou une alerte officielle d'autorité était en cours à ce moment précis."
+              />
+            </span>
           </div>
 
-          <div className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-3.5 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
-            <div>
-              <div className="font-bold text-rose-300">2. Alertes officielles</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">ASNR, IRSN, Sécurité civile, INES</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 flex items-center gap-3">
+              <Radio className="w-5 h-5 text-amber-400 shrink-0" />
+              <div>
+                <div className="font-bold text-amber-300">1. Mesure Téléray</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">Télémesures & pics enregistrés</div>
+              </div>
             </div>
-          </div>
 
-          <div className="rounded-xl border border-sky-500/30 bg-sky-500/5 p-3.5 flex items-center gap-3">
-            <CloudRain className="w-5 h-5 text-sky-400 shrink-0" />
-            <div>
-              <div className="font-bold text-sky-300">3. Événements météo</div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Radon-washout, Sahara, Crue, Soleil</div>
+            <div className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-3.5 flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+              <div>
+                <div className="font-bold text-rose-300">2. Alertes officielles</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">ASNR, IRSN, Sécurité civile, INES</div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-sky-500/30 bg-sky-500/5 p-3.5 flex items-center gap-3">
+              <CloudRain className="w-5 h-5 text-sky-400 shrink-0" />
+              <div>
+                <div className="font-bold text-sky-300">3. Événements météo</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">Radon-washout, Sahara, Crue, Soleil</div>
+              </div>
             </div>
           </div>
         </div>
@@ -148,8 +169,14 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({ onSelectStationByNam
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-amber-400" />
-            <h2 className="text-sm font-bold font-mono text-white">
-              Arborescence chronologique {selectedYear}
+            <h2 className="text-sm font-bold font-mono text-white flex items-center gap-2">
+              <span>Arborescence chronologique {selectedYear}</span>
+              <HelpTooltip
+                title="Navigation temporelle mensuelle"
+                position="bottom"
+                align="start"
+                content="Permet de naviguer mois par mois le long de la ligne du temps pour filtrer les événements historiques répertoriés. Sélectionnez un mois précis ou 'Année complète' pour visualiser tous les faits marquants."
+              />
             </h2>
             <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full font-mono">
               {filteredEvents.length} événements répertoriés

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import type { OfficialAlert } from '../types/radiation';
 import { ApiService } from '../services/api';
 import { safeFormatDateTime } from '../utils/dateUtils';
+import { HelpTooltip } from '../components/HelpTooltip';
 import {
   ShieldCheck,
   AlertTriangle,
@@ -87,7 +88,13 @@ export const AlertsPage: React.FC = () => {
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white font-mono flex items-center gap-2.5">
               <AlertTriangle className="w-7 h-7 text-amber-400" />
-              ALERTES & AVIS OFFICIELS DE RADIOPROTECTION
+              <span>ALERTES & AVIS OFFICIELS DE RADIOPROTECTION</span>
+              <HelpTooltip
+                title="Canal institutionnel certifié"
+                position="bottom"
+                align="start"
+                content="Registre officiel des déclarations de sûreté radiologique de l'État. Seules les autorités publiques habilitées (ASNR, IRSN, Sécurité Civile, Préfectures) peuvent qualifier un événement significatif. Chaque alerte est classée selon l'échelle internationale INES (niveaux 0 à 7) avec consignes vérifiées aux populations."
+              />
             </h1>
             <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
               Diffusion certifiée des alertes nationales, avis d'incidents (échelle internationale INES) et bulletins de surveillance Téléray émis par les autorités publiques d'État compétentes.
@@ -113,10 +120,18 @@ export const AlertsPage: React.FC = () => {
               <Server className="w-4 h-4 text-emerald-400" />
               <span className="text-slate-400">Connecteur officiel :</span>
             </div>
-            <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              {connectorStatus?.status || 'OPÉRATIONNEL'}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                {connectorStatus?.status || 'OPÉRATIONNEL'}
+              </span>
+              <HelpTooltip
+                title="Supervision du flux officiel d'alertes"
+                position="bottom"
+                align="end"
+                content="Liaison directe avec les registres d'incidents de l'ASNR et de l'IRSN. Vérifie l'authenticité numérique des communiqués et la conformité à l'échelle internationale INES."
+              />
+            </div>
           </div>
 
           <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
@@ -143,18 +158,26 @@ export const AlertsPage: React.FC = () => {
 
       {/* 🏛️ Crucial Methodology & Guarantee Card: Une alerte officielle ≠ une valeur élevée Radiator */}
       <div className="rounded-2xl border border-amber-600/50 bg-gradient-to-br from-amber-950/30 via-slate-900/90 to-slate-950 p-6 shadow-xl space-y-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5 border border-amber-500/30">
-            <ShieldCheck className="w-6 h-6" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5 border border-amber-500/30">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div className="space-y-1.5">
+              <h2 className="text-sm md:text-base font-bold text-white font-mono uppercase tracking-wide">
+                Principe méthodologique régalien : Une alerte officielle ≠ une valeur élevée détectée par Radiator
+              </h2>
+              <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
+                Le réseau <strong>Téléray</strong> possède ses propres mécanismes d'analyse institutionnelle et de qualification métrologique. Radiator applique un principe de radioprotection strict : <strong>l'application s'interdit formellement de générer des alertes autonomes ou algorithmiques</strong> basées sur un simple seuil chiffré.
+              </p>
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <h2 className="text-sm md:text-base font-bold text-white font-mono uppercase tracking-wide">
-              Principe méthodologique régalien : Une alerte officielle ≠ une valeur élevée détectée par Radiator
-            </h2>
-            <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
-              Le réseau <strong>Téléray</strong> possède ses propres mécanismes d'analyse institutionnelle et de qualification métrologique. Radiator applique un principe de radioprotection strict : <strong>l'application s'interdit formellement de générer des alertes autonomes ou algorithmiques</strong> basées sur un simple seuil chiffré.
-            </p>
-          </div>
+          <HelpTooltip
+            title="Doctrine de certification régalienne"
+            position="top"
+            align="end"
+            content="Garantie anti-panique : seuls les arrêtés, communiqués et avis validés par l'Autorité de Sûreté Nucléaire et de Radioprotection (ASNR / IRSN) ont le statut d'alerte. Une hausse locale causée par la pluie ou un sol granitique ne doit jamais être qualifiée arbitrairement d'anomalie."
+          />
         </div>
 
         {/* Pipeline Diagram (Exact User Request) */}
@@ -248,6 +271,12 @@ export const AlertsPage: React.FC = () => {
             <option value="INCIDENT_EXPLOITATION">Incidents d'exploitation (INES)</option>
             <option value="EXERCICE_PPI">Exercices PPI</option>
           </select>
+          <HelpTooltip
+            title="Classification des bulletins d'alerte"
+            position="bottom"
+            align="end"
+            content="Catégories officielles d'information du public : Bulletins périodiques Téléray de surveillance nationale, Événements météorologiques (lessivage du radon naturel), Incidents déclarés à l'échelle INES (niveaux 1 à 7) ou Exercices de sécurité civile PPI en conditions réelles."
+          />
         </div>
       </div>
 
@@ -378,17 +407,34 @@ export const AlertsPage: React.FC = () => {
                     )}
                   </div>
 
-                  {alert.official_url && (
-                    <a
-                      href={alert.official_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-amber-300 hover:text-white font-mono text-xs font-semibold transition"
-                    >
-                      <span>Consulter le communiqué officiel</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(alert.source_code === 'ASNR' || alert.source_code === 'IRSN_TELERAY') && (
+                      <a
+                        href="https://teleray.asnr.fr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 border border-emerald-700/50 px-2.5 py-1.5 text-emerald-300 hover:text-white font-mono text-xs font-semibold transition"
+                        title="Consulter le portail national officiel Téléray (ASNR)"
+                      >
+                        <Radio className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Portail Téléray en direct</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+
+                    {alert.official_url && (
+                      <a
+                        href={alert.official_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-amber-300 hover:text-white font-mono text-xs font-semibold transition"
+                        title={`Consulter le document source officiel : ${alert.official_url}`}
+                      >
+                        <span>Consulter le communiqué officiel</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             );

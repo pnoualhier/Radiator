@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { MeasurementTypeCode, Station } from '../types/radiation';
 import { MEASUREMENT_TYPES_CATALOG } from '../types/radiation';
 import type { NavTab } from '../components/Navigation';
+import { HelpTooltip } from '../components/HelpTooltip';
 import {
   Activity,
   Radio,
@@ -69,8 +70,14 @@ export const MeasurementTypesPage: React.FC<MeasurementTypesPageProps> = ({
           <Activity className="w-4 h-4" />
           <span>Architecture Métrologique Radiologique</span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white font-mono mt-1">
-          TYPES DE MESURE & VECTEURS DE SURVEILLANCE
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white font-mono mt-1 flex items-center gap-2">
+          <span>TYPES DE MESURE & VECTEURS DE SURVEILLANCE</span>
+          <HelpTooltip
+            title="Classification des grandeurs radiologiques"
+            position="bottom"
+            align="start"
+            content="En radioprotection, chaque milieu exige son propre détecteur et sa propre unité : débit de dose externe (nSv/h pour Téléray), concentration volumique d'aérosols (Bq/m³ pour OPERA-Air), activité volumique d'eau (Bq/L pour HydroTéléray) ou contamination surfacique (Bq/m²). Confondre ces grandeurs conduirait à des contresens physiques majeurs."
+          />
         </h1>
         <p className="text-xs md:text-sm text-slate-300 mt-1.5 leading-relaxed">
           Comprendre pourquoi une balise <strong>Téléray</strong> (débit de dose gamma externe) ne mesure pas une concentration de radionucléides dans l'air, et comment l'<strong>ASNR</strong> distingue ses réseaux de surveillance spécialisés (<strong>OPERA-Air</strong>, <strong>HydroTéléray</strong>, spectrométrie, etc.).
@@ -79,29 +86,37 @@ export const MeasurementTypesPage: React.FC<MeasurementTypesPageProps> = ({
 
       {/* Fundamental Scientific Distinction Box */}
       <section className="rounded-2xl border border-sky-800/60 bg-gradient-to-r from-sky-950/50 via-slate-900/80 to-slate-950 p-5 shadow-xl">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/30">
-            <Info className="w-5 h-5" />
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/30">
+              <Info className="w-5 h-5" />
+            </div>
+            <div className="space-y-2 text-xs leading-relaxed text-slate-300">
+              <h2 className="font-bold text-white text-sm font-mono uppercase text-sky-300">
+                Pourquoi Téléray ne mesure pas de concentration de radionucléides dans l'air ?
+              </h2>
+              <p>
+                Une sonde <strong>Téléray (ASNR / IRSN)</strong> est un dosimètre d'ambiance fixe à tube Geiger-Müller ou chambre d'ionisation. Elle compte les impulsions provoquées par les photons gamma traversant son boîtier blindé et calcule un <strong>débit d'équivalent de dose ambiant</strong> exprimé en <strong>nanosieverts par heure (nSv/h)</strong>. Elle indique <em>l'irradiation externe globale</em> ressentie par un être humain à cet endroit, mais :
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-slate-300 pl-1">
+                <li>
+                  <strong>Elle n'aspire pas l'air :</strong> elle est totalement insensible à la concentration massique ou volumique de poussières radioactives si celles-ci sont en infime quantité.
+                </li>
+                <li>
+                  <strong>Elle ne discerne pas les isotopes :</strong> elle ne sait pas si la radioactivité provient du Radon naturel, du Césium-137, de l'Iode-131 ou du rayonnement cosmique.
+                </li>
+                <li>
+                  <strong>C'est pour cela que l'ASNR opère OPERA-Air et HydroTéléray :</strong> pour déceler les poussières radioactives dans l'air (filtres très grand débit en µBq/m³) et les rejets dans les fleuves (eau brute en Bq/L).
+                </li>
+              </ul>
+            </div>
           </div>
-          <div className="space-y-2 text-xs leading-relaxed text-slate-300">
-            <h2 className="font-bold text-white text-sm font-mono uppercase text-sky-300">
-              Pourquoi Téléray ne mesure pas de concentration de radionucléides dans l'air ?
-            </h2>
-            <p>
-              Une sonde <strong>Téléray (ASNR / IRSN)</strong> est un dosimètre d'ambiance fixe à tube Geiger-Müller ou chambre d'ionisation. Elle compte les impulsions provoquées par les photons gamma traversant son boîtier blindé et calcule un <strong>débit d'équivalent de dose ambiant</strong> exprimé en <strong>nanosieverts par heure (nSv/h)</strong>. Elle indique <em>l'irradiation externe globale</em> ressentie par un être humain à cet endroit, mais :
-            </p>
-            <ul className="list-disc list-inside space-y-1 text-slate-300 pl-1">
-              <li>
-                <strong>Elle n'aspire pas l'air :</strong> elle est totalement insensible à la concentration massique ou volumique de poussières radioactives si celles-ci sont en infime quantité.
-              </li>
-              <li>
-                <strong>Elle ne discerne pas les isotopes :</strong> elle ne sait pas si la radioactivité provient du Radon naturel, du Césium-137, de l'Iode-131 ou du rayonnement cosmique.
-              </li>
-              <li>
-                <strong>C'est pour cela que l'ASNR opère OPERA-Air et HydroTéléray :</strong> pour déceler les poussières radioactives dans l'air (filtres très grand débit en µBq/m³) et les rejets dans les fleuves (eau brute en Bq/L).
-              </li>
-            </ul>
-          </div>
+          <HelpTooltip
+            title="Principe physique de détection"
+            position="top"
+            align="end"
+            content="Un dosimètre ambiant (Téléray) quantifie l'énergie déposée par les photons gamma traversant l'espace. Un préleveur d'air (OPERA-Air) aspire des volumes d'air gigantesques (85 000 m³/semaine) pour piéger les poussières physiques sur filtre et identifier leurs isotopes au laboratoire."
+          />
         </div>
       </section>
 
