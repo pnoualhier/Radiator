@@ -101,8 +101,8 @@ Arborescence chronologique interactive mois par mois (`Jan`, `Fév`, `Mars`...) 
 ### Lancement du Frontend & Serveur Intégré
 ```bash
 # Cloner le dépôt
-git clone https://github.com/radiator-france/radiation-france.git
-cd radiation-france
+git clone https://github.com/pnoualhier/Radiator.git
+cd Radiator
 
 # Installer les dépendances
 npm install
@@ -120,7 +120,27 @@ npm run build
 
 ---
 
-## 📄 Licence & Droits
+## 📄 Licence du Code & Licences Détaillées des Données
 
-- **Code source :** Licence MIT libre et open-source.
-- **Données publiques :** Licence Ouverte v2.0 (Etalab) pour les données d'État Téléray / IRSN / ASNR ; licences Open Data Commons / CC BY-SA pour les données citoyennes OpenRadiation et Safecast.
+### 💻 Code Source de l'Application
+- **Licence :** Licence MIT (libre, ouverte et réutilisable).
+- **Dépôt officiel :** [https://github.com/pnoualhier/Radiator](https://github.com/pnoualhier/Radiator)
+
+### 📊 Licences des Données et Obligations d'Attribution par Producteur
+Les télémesures agrégées par l'application proviennent de plusieurs producteurs distincts. Afin de respecter rigoureusement le cadre juridique de chaque réseau, **les licences ne sont pas généralisées** : chaque producteur dispose de ses propres conditions de réutilisation et obligations d'attribution documentées ci-dessous :
+
+| Réseau / Flux | Organisme producteur | Licence applicable | Conditions de réutilisation | Obligation d'attribution & Citation requise |
+| :--- | :--- | :--- | :--- | :--- |
+| **Téléray** | ASNR / IRSN (État Français) | **Licence Ouverte v2.0 (Etalab)** | Réutilisation libre (commerciale & non commerciale), reproduction, modification et diffusion autorisées. | **Mention obligatoire :** *« Source : ASNR - Réseau Téléray »* avec horodatage de l'extraction. Ne confère aucun aval officiel de l'ASNR à l'application réutilisatrice. |
+| **HydroTéléray** | ASNR / IRSN (État Français) | **Licence Ouverte v2.0 (Etalab)** | Réutilisation libre (commerciale & non commerciale) pour la surveillance radiologique des eaux fluviales en aval des CNPE. | **Mention obligatoire :** *« Source : ASNR - Réseau HydroTéléray »* avec date du relevé et radionucléide dosé. |
+| **OPERA-Air** | ASNR / IRSN (État Français) | **Licence Ouverte v2.0 (Etalab)** | Réutilisation libre (commerciale & non commerciale) des mesures d'aérosols atmosphériques sur filtres très grand débit. | **Mention obligatoire :** *« Source : ASNR - Réseau OPERA-Air »*. |
+| **EURDEP** | Commission Européenne (DG Joint Research Centre / JRC) | **Décision 2011/833/UE (EU Open Data)** | Réutilisation libre à des fins commerciales ou non commerciales, sous condition de préservation de l'intégrité contextuelle des données. | **Mention obligatoire :** *« Source : Union Européenne, DG JRC - Plateforme EURDEP »*. Obligation d'indiquer si des transformations, agrégations ou filtres ont été appliqués. |
+| **OpenRadiation** | Consortium OpenRadiation (IRSN, Sorbonne Université, ANCCLI, FabLabs) | **ODbL v1.0 (Open Database License)** | Partage, modification et enrichissement autorisés sous condition stricte de partage à l'identique (**Share-Alike**) des bases dérivées. | **Mention obligatoire :** *« Données : Contributeurs OpenRadiation sous licence ODbL »* avec lien actif vers [openradiation.org](https://openradiation.org) et notification des termes de la licence ODbL. |
+| **Safecast** | Safecast Global | **CC0 1.0 Universal (Domaine Public Dédié)** | Données brutes placées dans le domaine public universel (sans restriction ni contrainte de licence dérivée). | **Attribution éthique recommandée :** *« Données issues du réseau citoyen Safecast (projet bGeigie) »* avec mention et lien vers [safecast.org](https://safecast.org). |
+| **Fonds de carte** | Contributeurs OpenStreetMap | **ODbL (Open Database License)** | Cartographie géographique vectorielle et tuiles tuilées libres. | **Mention obligatoire :** *« © Contributeurs OpenStreetMap »* avec lien vers openstreetmap.org/copyright. |
+
+### ⚠️ Avertissements Légaux & Clause de Non-Affiliation
+- **Indépendance citoyenne :** « Radiation France » est une initiative logicielle indépendante développée à titre bénévole. Elle n'est affiliée, mandatée ni sponsorisée par l'Autorité de Sûreté Nucléaire et de Radioprotection (ASNR), l'IRSN, la Commission Européenne ou les exploitants nucléaires civils ou militaires.
+- **Dégagement de responsabilité :** La mise à disposition des données ouvertes n'engage pas la responsabilité des organismes producteurs quant aux analyses, calculs dérivés, visualisations ou interprétations réalisés au sein de cette interface.
+- **Canaux d'urgence de l'État :** En cas d'incident nucléaire ou radiologique avéré, cette application ne saurait remplacer les dispositifs d'alerte et de consignes officielles des préfectures, de la Sécurité Civile (FR-Alert, sirènes SAIP) ou de l'ASNR.
+

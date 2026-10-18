@@ -285,8 +285,26 @@ export const SourcesPage: React.FC = () => {
                     <span className="text-slate-500 text-[11px] uppercase tracking-wider block font-mono">
                       Licence de réutilisation
                     </span>
-                    <span className="text-slate-300 font-mono">{source.license || 'Non spécifiée'}</span>
+                    <span className="text-emerald-400 font-mono text-[11px] font-semibold">{source.license || 'Non spécifiée'}</span>
                   </div>
+
+                  {source.reuse_conditions && (
+                    <div>
+                      <span className="text-slate-500 text-[11px] uppercase tracking-wider block font-mono">
+                        Conditions de réutilisation
+                      </span>
+                      <span className="text-slate-300 text-[11px] leading-relaxed block">{source.reuse_conditions}</span>
+                    </div>
+                  )}
+
+                  {source.attribution && (
+                    <div className="bg-amber-950/20 border border-amber-800/40 rounded-lg p-2">
+                      <span className="text-amber-400 text-[10px] uppercase tracking-wider block font-mono font-bold">
+                        Obligation d'attribution
+                      </span>
+                      <span className="text-amber-200/90 font-mono text-[11px] block mt-0.5">{source.attribution}</span>
+                    </div>
+                  )}
 
                   {health && (
                     <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 mt-2 space-y-1">

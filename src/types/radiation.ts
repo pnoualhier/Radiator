@@ -141,6 +141,8 @@ export interface Source {
   source_type: 'INSTITUTIONAL' | 'CITIZEN' | 'RESEARCH';
   api_url?: string;
   license?: string;
+  reuse_conditions?: string;
+  attribution?: string;
   is_official: boolean;
   is_active: boolean;
   created_at: string;

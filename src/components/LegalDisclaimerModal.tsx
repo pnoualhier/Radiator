@@ -151,14 +151,49 @@ export const LegalDisclaimerModal: React.FC<LegalDisclaimerModalProps> = ({
             </p>
           </div>
 
-          {/* Section 4: Propriété intellectuelle et licences */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-2">
+          {/* Section 4: Propriété intellectuelle et licences distinctes par producteur */}
+          <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-3">
             <h3 className="text-white font-bold text-xs flex items-center gap-2">
               <FileText className="w-4 h-4 text-emerald-400" />
-              <span>4. Licences des Données Publiques</span>
+              <span>4. Licences des Données Publiques et Obligations d'Attribution par Producteur</span>
             </h3>
-            <p className="text-slate-400 text-[11px]">
-              Les données de Téléray et d'HydroTéléray sont diffusées par l'ASNR/IRSN. Les données citoyennes sont régies par les licences Open Data Commons / CC BY-SA (OpenRadiation et Safecast). Les marques et logos cités restent la propriété respective de leurs organismes producteurs.
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              Les télémesures proviennent de producteurs indépendants dotés de leurs propres régimes de réutilisation juridique :
+            </p>
+            <div className="space-y-2 text-[11px]">
+              <div className="border-l-2 border-emerald-500 pl-2.5 py-0.5">
+                <span className="text-emerald-400 font-bold block">Téléray, HydroTéléray & OPERA-Air (ASNR / IRSN) :</span>
+                <span className="text-slate-300">
+                  <strong>Licence Ouverte v2.0 (Etalab)</strong> — Réutilisation libre commerciale et non commerciale. Mention obligatoire : <em>« Source : ASNR - Réseau Téléray / HydroTéléray / OPERA-Air »</em> avec horodatage du relevé, sans caution officielle de l'ASNR.
+                </span>
+              </div>
+              <div className="border-l-2 border-sky-500 pl-2.5 py-0.5">
+                <span className="text-sky-400 font-bold block">EURDEP (Commission Européenne - DG JRC) :</span>
+                <span className="text-slate-300">
+                  <strong>Décision 2011/833/UE (EU Open Data)</strong> — Réutilisation libre avec obligation de mentionner la source (<em>« Source : Union Européenne, DG JRC - Plateforme EURDEP »</em>) et les modifications apportées.
+                </span>
+              </div>
+              <div className="border-l-2 border-purple-500 pl-2.5 py-0.5">
+                <span className="text-purple-400 font-bold block">OpenRadiation (Consortium IRSN / Sorbonne / ANCCLI) :</span>
+                <span className="text-slate-300">
+                  <strong>ODbL v1.0 (Open Database License)</strong> — Science participative avec obligation stricte de partage à l'identique (<em>Share-Alike</em>) et mention <em>« Données OpenRadiation sous licence ODbL »</em> avec lien vers openradiation.org.
+                </span>
+              </div>
+              <div className="border-l-2 border-amber-500 pl-2.5 py-0.5">
+                <span className="text-amber-400 font-bold block">Safecast (Safecast Global) :</span>
+                <span className="text-slate-300">
+                  <strong>CC0 1.0 Universal (Domaine Public)</strong> — Données de dosimétrie citoyenne bGeigie dans le domaine public avec citation éthique recommandée (<em>safecast.org</em>).
+                </span>
+              </div>
+              <div className="border-l-2 border-slate-600 pl-2.5 py-0.5">
+                <span className="text-slate-400 font-bold block">Cartographie (OpenStreetMap) :</span>
+                <span className="text-slate-300">
+                  <strong>ODbL</strong> — Données cartographiques © Contributeurs OpenStreetMap.
+                </span>
+              </div>
+            </div>
+            <p className="text-slate-500 text-[10px] italic">
+              Les marques, acronymes et logos cités demeurent la propriété exclusive de leurs organismes producteurs respectifs.
             </p>
           </div>
 
