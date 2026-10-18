@@ -6,6 +6,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { OfficialAlertConnector } from './src/connectors/OfficialAlertConnector';
+import { TelerayConnector } from './src/connectors/TelerayConnector';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -120,7 +121,8 @@ const RAW_BENCHMARK_STATIONS = [
   { id: 18, external_id: 'ORAD-CIT-CLERMONT', source_id: 3, source_code: 'OPENRADIATION', source_name: 'OpenRadiation (Sciences Participatives)', name: 'Clermont-Ferrand Jaude (Station Citoyenne)', latitude: 45.7772, longitude: 3.0870, altitude: 360, country: 'FR', region_code: 'ARA', department_code: '63', commune: 'Clermont-Ferrand', station_type: 'CITIZEN', is_official: false, is_active: true, nominal: 135.0 },
 ];
 
-const BENCHMARK_STATIONS = RAW_BENCHMARK_STATIONS.map(s => ({
+// Fixture stations strictly dedicated to tests and explicit Demo Mode
+const BENCHMARK_DEMO_STATIONS = RAW_BENCHMARK_STATIONS.map(s => ({
   ...s,
   network_tier: s.source_code === 'TELERAY' ? 'INSTITUTIONAL' : 'PARTICIPATORY',
   measurement_type: 'AMBIENT_GAMMA_DOSE_RATE',
@@ -135,9 +137,77 @@ const BENCHMARK_STATIONS = RAW_BENCHMARK_STATIONS.map(s => ({
     public_url: 'https://openradiation.org',
     daily_download_url: 'https://openradiation.org/fr/data',
   } : undefined,
-  data_nature: s.source_code === 'TELERAY' ? 'CACHED' : (IS_PROD && !ALLOW_DEMO ? 'UNAVAILABLE' : 'DEMO'),
-  is_simulated: false,
+  data_nature: 'DEMO',
+  is_simulated: true,
+  validation_status: 'SIMULATED_DEMO_FIXTURE',
 }));
+
+// Baseline offline catalog without simulated measurements (pure metadata)
+const BENCHMARK_REAL_CATALOG_STATIONS = RAW_BENCHMARK_STATIONS.map(s => ({
+  ...s,
+  network_tier: s.source_code === 'TELERAY' ? 'INSTITUTIONAL' : 'PARTICIPATORY',
+  measurement_type: 'AMBIENT_GAMMA_DOSE_RATE',
+  unit: 'nSv/h',
+  radionuclide_focus: 'Rayonnement gamma ambiant global',
+  sample_matrix: 'Air ambiant (1m du sol)',
+  data_nature: 'UNAVAILABLE',
+  is_simulated: false,
+  validation_status: 'SOURCE_NON_VERIFIEE_MESURE_DIRECTE_NON_FOURNIE',
+}));
+
+// Backward compatibility alias for any static references
+const BENCHMARK_STATIONS = BENCHMARK_REAL_CATALOG_STATIONS;
+
+// Real official Téléray stations retrieved from ASNR live GeoJSON endpoint
+let OFFICIAL_TELERAY_STATIONS: any[] = [];
+let TELERAY_ACCESS_REPORT: any = null;
+
+async function syncTelerayStations() {
+  try {
+    const report = await TelerayConnector.validateAccess();
+    TELERAY_ACCESS_REPORT = report;
+    console.log(`[TelerayConnector] Access validation: ${report.status} (${report.notes})`);
+
+    const { stations, source_status } = await TelerayConnector.fetchOfficialStations(500);
+
+    if (stations && stations.length > 0) {
+      OFFICIAL_TELERAY_STATIONS = stations.map(f => {
+        const id = 10000 + f.properties.irsnId;
+        return {
+          id,
+          external_id: `TEL-${f.properties.irsnId}`,
+          source_id: 1,
+          source_code: 'TELERAY',
+          source_name: 'Téléray / ASNR',
+          network_tier: 'INSTITUTIONAL',
+          name: f.properties.publicName || f.properties.name,
+          latitude: f.geometry.coordinates[1],
+          longitude: f.geometry.coordinates[0],
+          country: 'FR',
+          station_type: 'FIXED',
+          is_official: true,
+          is_active: true,
+          measurement_type: 'AMBIENT_GAMMA_DOSE_RATE',
+          unit: 'nSv/h',
+          data_nature: 'UNAVAILABLE',
+          is_simulated: false,
+          validation_status: 'SOURCE_CATALOGUE_VERIFIE_ASNR',
+          source_validation: source_status,
+          teleray_meta: {
+            irsn_id: f.properties.irsnId,
+            public_name: f.properties.publicName,
+            reseau: f.properties.reseau,
+            type: f.properties.type,
+            official_portal: 'https://teleray.asnr.fr',
+          },
+        };
+      });
+      console.log(`[TelerayConnector] Synced ${OFFICIAL_TELERAY_STATIONS.length} real official ASNR Téléray stations.`);
+    }
+  } catch (err) {
+    console.error('Failed to sync official Teleray stations:', err);
+  }
+}
 
 // Live sync for OpenRadiation real measurements
 let LIVE_OPENRADIATION_STATIONS: any[] = [];
@@ -280,9 +350,9 @@ function generateStationMeasurements(stationId: number, nominal: number, hoursCo
       measurement_type: 'AMBIENT_GAMMA_DOSE_RATE',
       quality_status: qualityStatus,
       is_stale: isStale,
-      validation_status: isStale ? 'RECEPTION_DELAY_STALE' : ((IS_PROD && !ALLOW_DEMO) ? 'IRSN_BASELINE_REFERENCE' : 'AUTO_VALIDATED'),
-      data_nature: (IS_PROD && !ALLOW_DEMO) ? 'CACHED' : 'DEMO',
-      is_simulated: !(IS_PROD && !ALLOW_DEMO),
+      validation_status: 'SIMULATED_DEMO_FIXTURE',
+      data_nature: 'DEMO',
+      is_simulated: true,
       raw_value: val,
       raw_unit: 'nSv/h',
       created_at: t.toISOString(),
@@ -291,11 +361,14 @@ function generateStationMeasurements(stationId: number, nominal: number, hoursCo
   return list;
 }
 
-// Pre-generate historical cache in memory
-const STATION_MEASUREMENTS = new Map<number, any[]>();
-BENCHMARK_STATIONS.forEach(s => {
-  STATION_MEASUREMENTS.set(s.id, generateStationMeasurements(s.id, s.nominal, 720)); // 30 days
+// Pre-generate demo historical cache strictly for explicit Demo Mode / testing
+const DEMO_STATION_MEASUREMENTS = new Map<number, any[]>();
+RAW_BENCHMARK_STATIONS.forEach(s => {
+  DEMO_STATION_MEASUREMENTS.set(s.id, generateStationMeasurements(s.id, s.nominal, 720)); // 30 days
 });
+
+// Backward compatibility alias for any references
+const STATION_MEASUREMENTS = DEMO_STATION_MEASUREMENTS;
 
 // ---------------------------------------------------------------------------
 // Source 5: OPERA-Air (ASNR - IRSN)
@@ -1163,10 +1236,25 @@ SAFECAST_BASE_POINTS.forEach(s => {
 
 async function syncSafecastLive() {
   try {
-    const res = await fetch('https://api.safecast.org/en-US/measurements.json?distance=150&latitude=48.85&longitude=2.35&limit=25');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const res = await fetch('https://api.safecast.org/en-US/measurements.json?distance=150&latitude=48.85&longitude=2.35&limit=25', {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Radiator-French-Radiation-Monitor/1.0',
+      },
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      // Safecast API is down or returned 502/503/429 - gracefully use base points
+      return;
+    }
+
     const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) throw new Error('Empty payload');
+    if (!Array.isArray(data) || data.length === 0) return;
 
     const stations: any[] = [];
     let idCounter = 310;
@@ -1233,14 +1321,24 @@ async function syncSafecastLive() {
       LIVE_SAFECAST_STATIONS = [...SAFECAST_BASE_POINTS, ...stations];
       console.log(`[Safecast] Synced ${LIVE_SAFECAST_STATIONS.length} live stations in France.`);
     }
-  } catch (err) {
-    console.warn('[Safecast] Remote API fetch note (using base points):', err);
+  } catch (err: any) {
+    // If request timed out or was aborted, silently maintain established base points
   }
 }
 
-function getAllStations() {
+function getAllStations(isDemo: boolean = false) {
+  if (isDemo) {
+    return [
+      ...BENCHMARK_DEMO_STATIONS,
+      ...EURDEP_STATIONS,
+      ...LIVE_OPENRADIATION_STATIONS,
+      ...LIVE_SAFECAST_STATIONS,
+      ...OPERA_AIR_STATIONS,
+      ...HYDROTELERAY_STATIONS,
+    ];
+  }
   return [
-    ...BENCHMARK_STATIONS,
+    ...(OFFICIAL_TELERAY_STATIONS.length > 0 ? OFFICIAL_TELERAY_STATIONS : BENCHMARK_REAL_CATALOG_STATIONS),
     ...EURDEP_STATIONS,
     ...LIVE_OPENRADIATION_STATIONS,
     ...LIVE_SAFECAST_STATIONS,
@@ -1249,9 +1347,12 @@ function getAllStations() {
   ];
 }
 
-function getStationHistory(stationId: number) {
+function getStationHistory(stationId: number, isDemo: boolean = false) {
+  if (isDemo) {
+    const demo = DEMO_STATION_MEASUREMENTS.get(stationId);
+    if (demo) return demo;
+  }
   return (
-    STATION_MEASUREMENTS.get(stationId) ||
     EURDEP_MEASUREMENTS.get(stationId) ||
     LIVE_OPENRADIATION_MEASUREMENTS.get(stationId) ||
     LIVE_SAFECAST_MEASUREMENTS.get(stationId) ||
@@ -1753,17 +1854,28 @@ async function startServer() {
 
   // Dynamic quality and staleness evaluation helper
   function enrichLatestMeasurement(station: any, latest: any) {
-    if (!latest) return undefined;
+    if (!latest) {
+      if (station.data_nature === 'UNAVAILABLE' || station.source_code === 'TELERAY') {
+        return {
+          station_id: station.id,
+          source_code: station.source_code,
+          is_official: station.is_official,
+          value: null,
+          unit: 'nSv/h',
+          data_nature: 'UNAVAILABLE',
+          is_simulated: false,
+          quality_status: 'MISSING',
+          validation_status: 'NON_VERIFIE_FLUX_BRUT_NON_FOURNI',
+          notice: "Station officielle Téléray ASNR. Le flux direct de télémesure brute instantanée n'est pas fourni en flux public ouvert sans clé.",
+        };
+      }
+      return undefined;
+    }
     const measuredAt = latest.measured_at;
     const ageMs = Date.now() - new Date(measuredAt).getTime();
     const ageMinutes = Math.max(0, Math.floor(ageMs / 60000));
     const ageHours = ageMs / 3600000;
 
-    // Staleness thresholds per network:
-    // Téléray & EURDEP: 2 hours (télésurveillance gamma haute fréquence)
-    // HydroTéléray: 12 hours (eaux fluviales continues)
-    // OPERA-Air: 240 hours (10 jours - spectrométrie hebdomadaire de traces)
-    // OpenRadiation & Safecast: 24 hours (sciences participatives)
     let staleThresholdHours = 2;
     if (station.source_code === 'OPERA_AIR') staleThresholdHours = 240;
     else if (station.source_code === 'HYDROTELERAY') staleThresholdHours = 12;
@@ -1794,6 +1906,7 @@ async function startServer() {
 
   // 4. Stations List
   app.get('/api/v1/stations', (req, res) => {
+    const isDemo = req.query.demo === 'true' || req.query.mode === 'demo';
     const {
       tier,
       source,
@@ -1808,12 +1921,12 @@ async function startServer() {
       type,
       observation_mode,
       radionuclide,
-      limit = '200'
+      limit = '500'
     } = req.query;
 
-    let results = getAllStations().map(s => {
-      const history = getStationHistory(s.id);
-      const latest = history[history.length - 1];
+    let results = getAllStations(isDemo).map(s => {
+      const history = getStationHistory(s.id, isDemo);
+      const latest = history.length > 0 ? history[history.length - 1] : undefined;
       let dist = undefined;
       if (lat && lon) {
         dist = haversine(parseFloat(lat as string), parseFloat(lon as string), s.latitude, s.longitude);
@@ -2048,19 +2161,30 @@ async function startServer() {
 
   // 5. Station Detail
   app.get('/api/v1/stations/:id', (req, res) => {
+    const isDemo = req.query.demo === 'true' || req.query.mode === 'demo';
     const stationId = parseInt(req.params.id, 10);
-    const station = getAllStations().find(s => s.id === stationId);
+    const station = getAllStations(isDemo).find(s => s.id === stationId);
     if (!station) {
-      return res.status(404).json({ detail: 'Station not found' });
+      return res.status(404).json({ detail: 'Station non trouvée' });
     }
-    const history = getStationHistory(stationId);
-    const latest = history[history.length - 1];
+    const history = getStationHistory(stationId, isDemo);
+    const latest = history.length > 0 ? history[history.length - 1] : undefined;
 
     res.json({
       ...station,
       latest_measurement: enrichLatestMeasurement(station, latest),
       recent_measurements: history.slice(-48).reverse(),
     });
+  });
+
+  // 5b. Téléray Official Access Validation Report
+  app.get('/api/v1/teleray/validation-report', async (req, res) => {
+    try {
+      const report = TELERAY_ACCESS_REPORT || await TelerayConnector.validateAccess();
+      res.json(report);
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Erreur lors de la validation Téléray' });
+    }
   });
 
   // 6. Latest Measurements across all stations
@@ -2317,12 +2441,15 @@ async function startServer() {
 
   httpServer.listen(PORT, '0.0.0.0', async () => {
     console.log(`Radiation France server running on http://0.0.0.0:${PORT}`);
+    // Initial sync of official Téléray ASNR stations
+    await syncTelerayStations();
     // Initial sync of real live OpenRadiation citizen sensors
     await syncOpenRadiationLive();
     // Initial sync of Safecast open radiation measurements
     await syncSafecastLive();
     // Periodic refresh every 10 minutes
     setInterval(async () => {
+      await syncTelerayStations();
       await syncOpenRadiationLive();
       await syncSafecastLive();
     }, 10 * 60 * 1000);

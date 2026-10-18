@@ -4,6 +4,7 @@ import { ApiService } from '../services/api';
 import { RadiationChart } from '../components/RadiationChart';
 import { Last24hRadiationChart } from '../components/Last24hRadiationChart';
 import { RadiationGauge } from '../components/RadiationGauge';
+import { DataNatureBadge } from '../components/DataNatureBadge';
 import { WhyThisValuePanel } from '../components/WhyThisValuePanel';
 import { HelpTooltip } from '../components/HelpTooltip';
 import { safeFormatTime, safeFormatDateTime, safeFormatNumber } from '../utils/dateUtils';
@@ -563,14 +564,12 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
 
           <div className="border-t border-slate-800 pt-2">
             <span className="text-[11px] font-mono uppercase text-slate-500">Nature de la donnée</span>
-            <div className="font-mono text-xs font-semibold mt-0.5">
-              {latest?.is_simulated || station.is_simulated || latest?.data_nature === 'DEMO' ? (
-                <span className="text-amber-400">🟠 Donnée simulée (Mode Démo)</span>
-              ) : latest?.data_nature === 'CACHED' ? (
-                <span className="text-sky-400">🔵 Donnée réelle archivée</span>
-              ) : (
-                <span className="text-emerald-400">🟢 Donnée réelle en direct</span>
-              )}
+            <div className="mt-1">
+              <DataNatureBadge
+                dataNature={latest?.data_nature || station.data_nature}
+                validationStatus={latest?.validation_status || station.validation_status}
+                isSimulated={latest?.is_simulated || station.is_simulated}
+              />
             </div>
           </div>
 

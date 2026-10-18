@@ -15,6 +15,8 @@ interface HeaderProps {
   onOpenMenu?: () => void;
   onOpenSettings?: () => void;
   onOpenTour?: () => void;
+  isDemoMode?: boolean;
+  onToggleDemoMode?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,6 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMenu,
   onOpenSettings,
   onOpenTour,
+  isDemoMode,
+  onToggleDemoMode,
 }) => {
   const isOnline = useOnlineStatus();
   const { isLight, toggleTheme } = useTheme();
@@ -106,6 +110,21 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Compass className="w-3.5 h-3.5 text-amber-400" />
               <span>Visite</span>
+            </button>
+          )}
+
+          {/* Demo Mode Toggle */}
+          {onToggleDemoMode && (
+            <button
+              onClick={onToggleDemoMode}
+              title={isDemoMode ? "Mode Démonstration actif. Cliquer pour revenir au mode Données Réelles." : "Basculer en Mode Démonstration (données simulées pour tests)."}
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-mono font-bold border transition cursor-pointer ${
+                isDemoMode
+                  ? 'border-purple-500/50 bg-purple-950/80 text-purple-300 hover:bg-purple-900/60 shadow-xs'
+                  : 'border-slate-800 bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <span>{isDemoMode ? '🧪 DÉMO' : '🛡️ RÉEL'}</span>
             </button>
           )}
 

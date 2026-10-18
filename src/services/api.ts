@@ -17,22 +17,36 @@ import { db, saveAuditTimestamps, getAuditTimestamps } from '../offline/db';
 
 const BASE_URL = '/api/v1';
 
+export interface ServerErrorInfo {
+  status: number;
+  statusText: string;
+  endpoint: string;
+  message: string;
+  occurred_at: string;
+}
+
 export interface ApiResponse<T> {
   data: T;
   isCached: boolean;
   timestamp: string;
   timestamps?: AuditTimestamps;
+  serverError?: ServerErrorInfo;
+  isCacheEmpty?: boolean;
 }
 
 export class ApiService {
   /**
    * Helper for network request with automatic IndexedDB fallback and granular 4-timestamp audit
+   * Handles server errors (HTTP 500, etc.) by returning an explicit warning banner
+   * rather than replacing it with stale cache without notification.
    */
   private static async fetchWithOfflineFallback<T>(
     endpoint: string,
     cacheReader: () => Promise<T>,
     cacheWriter: (data: T) => Promise<void>
   ): Promise<ApiResponse<T>> {
+    let serverError: ServerErrorInfo | undefined = undefined;
+
     try {
       const response = await fetch(`${BASE_URL}${endpoint}`);
       if (response.ok) {
@@ -43,12 +57,11 @@ export class ApiService {
           (data as any)?.server_timestamp ||
           cacheNow;
 
-        // Extract finest data_timestamp and source_timestamp from payload
+        // Extract finest data_timestamp (measured_at) and source_timestamp from payload
         let dataTimestamp: string | undefined = (data as any)?.data_timestamp;
         let sourceTimestamp: string | undefined = (data as any)?.source_timestamp;
 
         if (!dataTimestamp && Array.isArray(data) && data.length > 0) {
-          // Scan for most recent measurement time in the dataset
           for (const item of data) {
             const mAt =
               item?.latest_measurement?.data_timestamp ||
@@ -77,7 +90,7 @@ export class ApiService {
           cache_timestamp: cacheNow,
         };
 
-        // Persist to IndexedDB in background
+        // Persist to IndexedDB with cached_at recorded
         cacheWriter(data).catch(err => console.warn('Dexie cache write failed:', err));
         saveAuditTimestamps(auditTimestamps).catch(err => console.warn('Dexie audit timestamp write failed:', err));
 
@@ -87,21 +100,50 @@ export class ApiService {
           timestamp: cacheNow,
           timestamps: auditTimestamps,
         };
+      } else {
+        // Le serveur a retourné une erreur explicite (HTTP 500, 502, 503, 404, etc.)
+        serverError = {
+          status: response.status,
+          statusText: response.statusText,
+          endpoint,
+          message: `Le serveur a rencontré une anomalie (HTTP ${response.status} ${response.statusText}).`,
+          occurred_at: new Date().toISOString(),
+        };
+        console.warn(`[ApiService] Server error on ${endpoint}:`, serverError);
       }
-    } catch (networkError) {
-      console.info(`Network call to ${endpoint} failed, falling back to IndexedDB:`, networkError);
+    } catch (networkError: any) {
+      console.info(`Network call to ${endpoint} failed, falling back to IndexedDB:`, networkError?.message || networkError);
     }
 
-    // Fallback to IndexedDB
+    // Fallback to IndexedDB (mode déconnecté ou erreur serveur)
     const cachedData = await cacheReader();
     const storedTimestamps = await getAuditTimestamps();
-    const now = new Date().toISOString();
 
-    const auditTimestamps: AuditTimestamps = storedTimestamps || {
-      data_timestamp: now,
-      source_timestamp: now,
-      server_timestamp: now,
-      cache_timestamp: now,
+    const isCacheEmpty = !cachedData || (Array.isArray(cachedData) && cachedData.length === 0);
+
+    // Retrouver la date physique réelle de mesure dans les données en cache
+    let realOldestMeasuredAt: string | undefined = undefined;
+    let realNewestMeasuredAt: string | undefined = undefined;
+
+    if (Array.isArray(cachedData) && cachedData.length > 0) {
+      for (const item of cachedData) {
+        const mAt = item?.latest_measurement?.measured_at || item?.measured_at || item?.data_timestamp;
+        if (mAt) {
+          if (!realNewestMeasuredAt || new Date(mAt).getTime() > new Date(realNewestMeasuredAt).getTime()) {
+            realNewestMeasuredAt = mAt;
+          }
+          if (!realOldestMeasuredAt || new Date(mAt).getTime() < new Date(realOldestMeasuredAt).getTime()) {
+            realOldestMeasuredAt = mAt;
+          }
+        }
+      }
+    }
+
+    const auditTimestamps: AuditTimestamps = {
+      data_timestamp: realNewestMeasuredAt || storedTimestamps?.data_timestamp || 'Inconnue',
+      source_timestamp: storedTimestamps?.source_timestamp || storedTimestamps?.server_timestamp || 'Inconnue',
+      server_timestamp: storedTimestamps?.server_timestamp || 'Inconnue',
+      cache_timestamp: storedTimestamps?.cache_timestamp || 'Non mis en cache',
     };
 
     return {
@@ -109,6 +151,8 @@ export class ApiService {
       isCached: true,
       timestamp: auditTimestamps.cache_timestamp,
       timestamps: auditTimestamps,
+      serverError,
+      isCacheEmpty,
     };
   }
 
@@ -126,8 +170,10 @@ export class ApiService {
     radius?: number;
     official?: boolean;
     limit?: number;
+    demo?: boolean;
   }): Promise<ApiResponse<Station[]>> {
     const query = new URLSearchParams();
+    if (params?.demo !== undefined) query.set('demo', params.demo.toString());
     if (params?.source) query.set('source', params.source);
     if (params?.measurement_type) query.set('measurement_type', params.measurement_type);
     if (params?.observation_mode) query.set('observation_mode', params.observation_mode);

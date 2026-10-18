@@ -287,16 +287,24 @@ export const AlertsPage: React.FC = () => {
           <div>Interrogation du connecteur d'alertes officielles...</div>
         </div>
       ) : filteredAlerts.length === 0 ? (
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 text-center flex flex-col items-center justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 mb-3">
-            <CheckCircle2 className="w-6 h-6" />
+        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-8 text-center flex flex-col items-center justify-center space-y-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800 text-slate-300">
+            <ShieldCheck className="w-6 h-6 text-emerald-400" />
           </div>
-          <h2 className="text-base font-bold text-white">
-            Aucune alerte active dans cette catégorie.
-          </h2>
-          <p className="mt-1 text-xs text-slate-400 max-w-md">
-            L'ensemble des réseaux de télémesure en France métropolitaine et Corse enregistre des niveaux radiologiques conformes au fond ambiant environnemental habituel.
-          </p>
+          <div className="space-y-1">
+            <h2 className="text-base font-bold text-white font-mono">
+              Aucune alerte officielle enregistrée
+            </h2>
+            <p className="text-xs text-slate-400 max-w-lg leading-relaxed font-sans">
+              Aucun avis d'incident radiologique, anomalie INES ou bulletin d'alerte n'a été publié par les autorités publiques d'État compétentes (ASNR, IRSN, Préfectures, Système ECURIE) pour les critères sélectionnés.
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 max-w-lg text-left space-y-1 font-mono">
+            <span className="text-amber-400 font-bold block">⚠️ Précision méthodologique de sûreté :</span>
+            <span>
+              L'absence de résultat dans le registre confirme uniquement qu'aucune alerte institutionnelle n'a été diffusée. Elle ne doit jamais être interprétée comme une validation algorithmique autonome par Radiator.
+            </span>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

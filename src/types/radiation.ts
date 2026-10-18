@@ -413,6 +413,7 @@ export interface Station {
   is_active: boolean;
   data_nature?: 'LIVE' | 'CACHED' | 'DEMO' | 'UNAVAILABLE';
   is_simulated?: boolean;
+  validation_status?: string;
   last_seen_at?: string;
   created_at: string;
   updated_at: string;

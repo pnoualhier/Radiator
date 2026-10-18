@@ -1,0 +1,310 @@
+{
+  "source": "https://teleray.asnr.fr/api/stations",
+  "retrieved_at": "2026-10-17T17:30:48.866Z",
+  "network": "TELERAY",
+  "authority": "ASNR / IRSN",
+  "unit": "nSv/h",
+  "total_stations": 479,
+  "sample_features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.727,
+          35.647
+        ]
+      },
+      "properties": {
+        "irsnId": 1000,
+        "name": "TOKYO-JAPON_ET_AGG_CP",
+        "publicName": "TOKYO-JAPON",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.061,
+          14.622
+        ]
+      },
+      "properties": {
+        "irsnId": 1001,
+        "name": "FORT-DE-FRANCE-MARTINIQUE_972_AGG_CP",
+        "publicName": "FORT-DE-FRANCE-MARTINIQUE",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -61.694,
+          16.028
+        ]
+      },
+      "properties": {
+        "irsnId": 1002,
+        "name": "ST-CLAUDE-GUADELOUPE_971_AGG_CP",
+        "publicName": "ST-CLAUDE-GUADELOUPE",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.491,
+          -20.888
+        ]
+      },
+      "properties": {
+        "irsnId": 1003,
+        "name": "STE-CLOTILDE-LA-REUNION_974_AGG_CP",
+        "publicName": "STE-CLOTILDE-LA-REUNION",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -52.324,
+          4.92
+        ]
+      },
+      "properties": {
+        "irsnId": 1004,
+        "name": "CAYENNE-GUYANE_973_AGG_CP",
+        "publicName": "CAYENNE-GUYANE",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          166.451,
+          -22.293
+        ]
+      },
+      "properties": {
+        "irsnId": 1005,
+        "name": "NOUMEA-NOUVELLE-CALEDONIE_988_AGG_CP",
+        "publicName": "NOUMEA-NOUVELLE-CALEDONIE",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -149.571,
+          -17.543
+        ]
+      },
+      "properties": {
+        "irsnId": 1006,
+        "name": "PAPEETE-TAHITI_987_AGG_CP",
+        "publicName": "PAPEETE-TAHITI",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          30.508,
+          50.454
+        ]
+      },
+      "properties": {
+        "irsnId": 1007,
+        "name": "KIEV-UKRAINE_ET_AGG_CP",
+        "publicName": "KIEV-UKRAINE",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          45.276,
+          -12.798
+        ]
+      },
+      "properties": {
+        "irsnId": 1008,
+        "name": "PAMANDZI-MAYOTTE_976_AGG_CP",
+        "publicName": "PAMANDZI-MAYOTTE",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.272,
+          49.888
+        ]
+      },
+      "properties": {
+        "irsnId": 1009,
+        "name": "AMIENS_80_AGG_CP",
+        "publicName": "AMIENS",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.484,
+          48.446
+        ]
+      },
+      "properties": {
+        "irsnId": 1010,
+        "name": "CHARTRES_28_AGG_CP",
+        "publicName": "CHARTRES",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.878,
+          48.958
+        ]
+      },
+      "properties": {
+        "irsnId": 1011,
+        "name": "MEAUX_77_AGG_CP",
+        "publicName": "MEAUX",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.654,
+          48.542
+        ]
+      },
+      "properties": {
+        "irsnId": 1012,
+        "name": "MELUN_77_AGG_CP",
+        "publicName": "MELUN",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.377,
+          48.84
+        ]
+      },
+      "properties": {
+        "irsnId": 1013,
+        "name": "PARIS-BERCY_75_AGG_CP",
+        "publicName": "PARIS-BERCY",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.343,
+          48.887
+        ]
+      },
+      "properties": {
+        "irsnId": 1015,
+        "name": "PARIS-SACRE-COEUR_75_AGG_CP",
+        "publicName": "PARIS-SACRE-COEUR",
+        "owner": "IRSN",
+        "reseau": "TELERAY",
+        "statut": "FIXE",
+        "type": "Compteur_Proportionnel",
+        "validated": true
+      }
+    }
+  ]
+}

@@ -123,6 +123,21 @@ export function formatDataMaxAge(diffMs: number): string {
 /**
  * Récupère les métriques exhaustives pour le Centre d'Information Hors Connexion
  */
+export interface OfflineSourceFreshness {
+  sourceCode: string;
+  networkName: string;
+  stationsCount: number;
+  measurementsCount: number;
+  newestMeasuredAt?: string;
+  oldestMeasuredAt?: string;
+  lastCachedAt?: string;
+  isStale: boolean;
+  statusLabel: string;
+}
+
+/**
+ * Récupère les métriques véridiques pour le Centre d'Information Hors Connexion
+ */
 export async function getOfflineCenterStats(): Promise<OfflineCenterStats> {
   const audit = await getAuditTimestamps();
   let stationsList: Station[] = [];
@@ -133,40 +148,33 @@ export async function getOfflineCenterStats(): Promise<OfflineCenterStats> {
   }
 
   const rawStationsCount = stationsList.length;
-  // Téléray représente l'ossature d'État principale (457 balises d'alerte)
-  const telerayCount = stationsList.filter(s => !s.source_code || s.source_code === 'TELERAY').length || 457;
-  const totalStations = rawStationsCount > 0 ? rawStationsCount : 457;
+  const telerayCount = stationsList.filter(s => s.source_code === 'TELERAY' || s.source_id === 1).length;
 
-  // Calcul du volume de mesures stockées
   let rawMeasCount = 0;
   try {
     rawMeasCount = await db.measurements.count();
   } catch {}
-  const totalMeasurements = rawMeasCount > 0 ? rawMeasCount : Math.max(12480, totalStations * 28);
-  const telerayMeasurements = Math.round(totalMeasurements * (telerayCount / totalStations)) || 12480;
 
-  // Calcul dynamique de l'âge maximal des données en cache
   const now = Date.now();
-  let maxAgeMs = 11520000; // 3 h 12 par défaut (11 520 000 ms)
-  if (stationsList.length > 0) {
-    let oldestTimestamp = Infinity;
-    for (const s of stationsList) {
-      const mAt = s.latest_measurement?.data_timestamp || s.latest_measurement?.measured_at;
-      if (mAt) {
-        const time = new Date(mAt).getTime();
-        if (!isNaN(time) && time > 0 && time < oldestTimestamp) {
-          oldestTimestamp = time;
-        }
+  let oldestTimestamp = Infinity;
+  let newestTimestamp = 0;
+
+  for (const s of stationsList) {
+    const mAt = s.latest_measurement?.data_timestamp || s.latest_measurement?.measured_at || (s as any).measured_at;
+    if (mAt) {
+      const time = new Date(mAt).getTime();
+      if (!isNaN(time) && time > 0) {
+        if (time < oldestTimestamp) oldestTimestamp = time;
+        if (time > newestTimestamp) newestTimestamp = time;
       }
-    }
-    if (oldestTimestamp !== Infinity && oldestTimestamp < now) {
-      maxAgeMs = now - oldestTimestamp;
     }
   }
 
-  // Formatage de la dernière synchronisation (ex: "10:42")
+  const maxAgeMs = (oldestTimestamp !== Infinity && oldestTimestamp < now) ? (now - oldestTimestamp) : 0;
+  const maxAgeFormatted = rawStationsCount > 0 ? formatDataMaxAge(maxAgeMs) : 'Cache vide';
+
+  let lastSyncFormatted = 'Non synchronisé';
   const syncDate = audit?.cache_timestamp || audit?.server_timestamp;
-  let lastSyncFormatted = '10:42';
   if (syncDate) {
     try {
       const d = new Date(syncDate);
@@ -176,48 +184,29 @@ export async function getOfflineCenterStats(): Promise<OfflineCenterStats> {
     } catch {}
   }
 
-  // Ventilation par réseaux disponibles
-  const networks: OfflineNetworkSummary[] = [
-    {
-      networkName: 'Téléray (ASNR / IRSN)',
-      sourceCode: 'TELERAY',
-      stationsCount: telerayCount,
-      measurementsCount: telerayMeasurements,
-      lastSyncTime: lastSyncFormatted,
-      maxAgeFormatted: formatDataMaxAge(maxAgeMs),
-      qualityStatus: 'VALIDÉ (Surveillance nationale d\'État)',
-    },
-    {
-      networkName: 'EURDEP (Union Européenne)',
-      sourceCode: 'EURDEP',
-      stationsCount: stationsList.filter(s => s.source_code === 'EURDEP').length || 72,
-      measurementsCount: 1850,
-      lastSyncTime: lastSyncFormatted,
-      maxAgeFormatted: formatDataMaxAge(maxAgeMs + 3600000),
-      qualityStatus: 'Échange radiologique transfrontalier',
-    },
-    {
-      networkName: 'OPERA-Air (IRSN)',
-      sourceCode: 'OPERA_AIR',
-      stationsCount: stationsList.filter(s => s.source_code === 'OPERA_AIR').length || 45,
-      measurementsCount: 980,
-      lastSyncTime: lastSyncFormatted,
-      maxAgeFormatted: '7 jours (Spectrométrie gamma traces)',
-      qualityStatus: 'Spectrométrie de haute sensibilité',
-    },
-    {
-      networkName: 'HydroTéléray (IRSN)',
-      sourceCode: 'HYDROTELERAY',
-      stationsCount: stationsList.filter(s => s.source_code === 'HYDROTELERAY').length || 18,
-      measurementsCount: 520,
-      lastSyncTime: lastSyncFormatted,
-      maxAgeFormatted: formatDataMaxAge(maxAgeMs + 7200000),
-      qualityStatus: 'Télésurveillance des effluents fluviaux',
-    },
+  const sourcesDefs = [
+    { code: 'TELERAY', name: 'Téléray (ASNR / IRSN)', role: 'Surveillance gamma nationale' },
+    { code: 'OPENRADIATION', name: 'OpenRadiation (Sciences Participatives)', role: 'Mesures citoyennes' },
+    { code: 'EURDEP', name: 'EURDEP (Union Européenne)', role: 'Échange transfrontalier' },
+    { code: 'OPERA_AIR', name: 'OPERA-Air (ASNR-IRSN)', role: 'Aérosols atmosphériques' },
+    { code: 'HYDROTELERAY', name: 'HydroTéléray (ASNR)', role: 'Eaux fluviales' },
+    { code: 'SAFECAST', name: 'Safecast', role: 'Capteurs mobiles' },
   ];
 
-  // Estimation du stockage
-  let storageEstimateMb = 4.8;
+  const networks: OfflineNetworkSummary[] = sourcesDefs.map(src => {
+    const count = stationsList.filter(s => s.source_code === src.code).length;
+    return {
+      networkName: src.name,
+      sourceCode: src.code,
+      stationsCount: count,
+      measurementsCount: count > 0 ? count * 1 : 0,
+      lastSyncTime: count > 0 ? lastSyncFormatted : 'Aucun enregistrement',
+      maxAgeFormatted: count > 0 ? maxAgeFormatted : 'N/D',
+      qualityStatus: count > 0 ? `${count} station(s) en cache local` : 'Non mis en cache',
+    };
+  });
+
+  let storageEstimateMb = 0.5;
   try {
     if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
       const est = await navigator.storage.estimate();
@@ -228,12 +217,12 @@ export async function getOfflineCenterStats(): Promise<OfflineCenterStats> {
   } catch {}
 
   return {
-    stationsCount: totalStations,
-    measurementsCount: totalMeasurements,
+    stationsCount: rawStationsCount,
+    measurementsCount: rawMeasCount,
     telerayStationsCount: telerayCount,
-    telerayMeasurementsCount: telerayMeasurements,
+    telerayMeasurementsCount: telerayCount,
     lastSyncFormatted,
-    maxAgeFormatted: formatDataMaxAge(maxAgeMs),
+    maxAgeFormatted,
     networks,
     auditTimestamps: audit,
     storageEstimateMb,

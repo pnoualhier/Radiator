@@ -5,7 +5,8 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import type { Station, AuditTimestamps } from './types/radiation';
-import { ApiService } from './services/api';
+import { ApiService, type ServerErrorInfo } from './services/api';
+import { safeFormatDateTime } from './utils/dateUtils';
 import { useGeolocation } from './hooks/useGeolocation';
 import { Header } from './components/Header';
 import { Navigation, type NavTab } from './components/Navigation';
@@ -45,6 +46,9 @@ export default function App() {
   const [isCached, setIsCached] = useState(false);
   const [auditTimestamps, setAuditTimestamps] = useState<AuditTimestamps | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<ServerErrorInfo | null>(null);
+  const [isCacheEmpty, setIsCacheEmpty] = useState<boolean>(false);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
 
   useEffect(() => {
     console.log('[RadioFrance:App] 🌟 Composant App monté avec succès dans le DOM.');
@@ -81,10 +85,11 @@ export default function App() {
   const { latitude, longitude, loading: isLocating, requestPosition } = useGeolocation();
 
   // Load stations
-  const loadStations = useCallback(async (userLat?: number | null, userLon?: number | null) => {
+  const loadStations = useCallback(async (userLat?: number | null, userLon?: number | null, demoOverride?: boolean) => {
     try {
-      console.log(`[RadioFrance:App] 📡 Récupération des stations (${userLat ? 'avec coordonnées GPS' : 'périmètre national'})...`);
-      const params: any = {};
+      const activeDemo = demoOverride !== undefined ? demoOverride : isDemoMode;
+      console.log(`[RadioFrance:App] 📡 Récupération des stations (${userLat ? 'avec GPS' : 'national'}, mode: ${activeDemo ? 'DÉMO' : 'RÉEL'})...`);
+      const params: any = { demo: activeDemo };
       if (userLat != null && userLon != null) {
         params.lat = userLat;
         params.lon = userLon;
@@ -97,6 +102,12 @@ export default function App() {
       if (res.timestamps) {
         setAuditTimestamps(res.timestamps);
       }
+      if (res.serverError) {
+        setServerError(res.serverError);
+      } else {
+        setServerError(null);
+      }
+      setIsCacheEmpty(Boolean(res.isCacheEmpty));
       setInitError(null);
     } catch (err: any) {
       console.error('[RadioFrance:App] ⚠️ Exception lors de la récupération des stations:', err);
@@ -105,7 +116,7 @@ export default function App() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [isDemoMode]);
 
   // Initial load
   useEffect(() => {
@@ -122,6 +133,13 @@ export default function App() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await loadStations(latitude, longitude);
+  };
+
+  const handleToggleDemoMode = async () => {
+    const next = !isDemoMode;
+    setIsDemoMode(next);
+    setIsRefreshing(true);
+    await loadStations(latitude, longitude, next);
   };
 
   // Find nearest station if user coordinates are known
@@ -189,6 +207,8 @@ export default function App() {
         onOpenMenu={() => setIsMenuOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenTour={() => setIsTourOpen(true)}
+        isDemoMode={isDemoMode}
+        onToggleDemoMode={handleToggleDemoMode}
       />
 
       {/* Main Tab Navigation */}
@@ -199,7 +219,64 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 pt-4">
-        {initError && (
+        {/* Explicit Demo Mode Banner */}
+        {isDemoMode && (
+          <div className="mb-4 rounded-2xl border border-purple-500/50 bg-purple-950/40 p-4 text-xs font-mono text-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl backdrop-blur-xs">
+            <div className="flex items-start gap-2.5">
+              <span className="text-lg">🧪</span>
+              <div className="space-y-0.5">
+                <div className="font-bold text-purple-300 uppercase tracking-wide text-[11px]">
+                  Mode Démonstration Actif (Données d'étalonnage pour tests)
+                </div>
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Toutes les balises sont des fixtures d'essai clairement identifiées <strong>DEMO</strong>. Aucune valeur simulée n'est présentée comme une télémesure officielle ASNR/Téléray en direct.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleToggleDemoMode}
+              className="self-start sm:self-auto shrink-0 px-3 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/60 text-purple-200 hover:text-white font-bold transition text-[11px]"
+            >
+              Revenir au mode Données Réelles
+            </button>
+          </div>
+        )}
+
+        {/* Explicit Server Error / Degradation Banner (Requirement: Ne pas remplacer une erreur serveur par du cache sans avertissement explicite) */}
+        {serverError && (
+          <div className="mb-4 rounded-2xl border border-amber-500/60 bg-amber-950/40 p-4 text-xs font-mono text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl backdrop-blur-xs">
+            <div className="flex items-start gap-2.5">
+              <span className="text-lg">⚠️</span>
+              <div className="space-y-0.5">
+                <div className="font-bold text-amber-300 uppercase tracking-wide text-[11px]">
+                  Avertissement d'incident serveur (HTTP {serverError.status} {serverError.statusText})
+                </div>
+                <p className="text-slate-200 text-[11px] leading-relaxed">
+                  Le serveur central a rencontré une anomalie sur <code>{serverError.endpoint}</code>. En application des règles de sûreté, aucune fausse donnée n'a été injectée : l'application affiche votre cache local archivé à <strong>{auditTimestamps?.cache_timestamp ? safeFormatDateTime(auditTimestamps.cache_timestamp) : 'précédemment'}</strong> (date réelle de la mesure : <strong>{auditTimestamps?.data_timestamp ? safeFormatDateTime(auditTimestamps.data_timestamp) : 'Inconnue'}</strong>).
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleRefresh()}
+              className="self-start sm:self-auto shrink-0 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 hover:text-white font-bold transition text-[11px]"
+            >
+              Réessayer
+            </button>
+          </div>
+        )}
+
+        {/* Empty Cache Notice when offline or in error */}
+        {isCacheEmpty && (serverError || initError) && (
+          <div className="mb-4 rounded-2xl border border-sky-500/40 bg-sky-950/30 p-4 text-xs font-mono text-sky-200 flex items-start gap-2.5 shadow-lg">
+            <span className="text-lg">ℹ️</span>
+            <div>
+              <span className="font-bold text-sky-300">Cache local vide : </span>
+              <span>Aucune mesure n'a encore été mise en cache sur cet appareil. Une première synchronisation avec le réseau est nécessaire pour peupler la base locale IndexedDB.</span>
+            </div>
+          </div>
+        )}
+
+        {initError && !serverError && (
           <div className="mb-4 rounded-2xl border border-red-500/40 bg-red-950/40 p-4 text-xs font-mono text-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
             <div className="flex items-center gap-2">
               <span className="text-base">⚠️</span>
