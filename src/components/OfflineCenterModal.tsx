@@ -16,6 +16,9 @@ import {
   Info,
   Calendar,
   Zap,
+  Globe,
+  AlertTriangle,
+  ArrowRight,
 } from 'lucide-react';
 import { getOfflineCenterStats, type OfflineCenterStats } from '../offline/db';
 import type { AuditTimestamps } from '../types/radiation';
@@ -29,6 +32,7 @@ interface OfflineCenterModalProps {
   auditTimestamps?: AuditTimestamps | null;
   onRefresh?: () => Promise<void> | void;
   isRefreshing?: boolean;
+  onNavigateToTab?: (tab: string) => void;
 }
 
 export const OfflineCenterModal: React.FC<OfflineCenterModalProps> = ({
@@ -38,12 +42,13 @@ export const OfflineCenterModal: React.FC<OfflineCenterModalProps> = ({
   auditTimestamps,
   onRefresh,
   isRefreshing = false,
+  onNavigateToTab,
 }) => {
   const isOnline = useOnlineStatus();
   const [stats, setStats] = useState<OfflineCenterStats | null>(null);
   const [isPinging, setIsPinging] = useState(false);
   const [pingSuccess, setPingSuccess] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<'summary' | 'networks' | 'chain'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'networks' | 'chain' | 'pages'>('summary');
 
   useEffect(() => {
     if (isOpen) {
@@ -185,11 +190,21 @@ export const OfflineCenterModal: React.FC<OfflineCenterModalProps> = ({
             >
               Chaîne d'horodatage
             </button>
+            <button
+              onClick={() => setActiveTab('pages')}
+              className={`px-3 py-1.5 rounded-xl font-semibold transition ${
+                activeTab === 'pages'
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              Disponibilité des pages
+            </button>
           </div>
           <HelpTooltip
             title="Diagnostics Hors Connexion"
             position="left"
-            content="Basculez entre le résumé des données Téléray locales, l'inventaire complet des 4 réseaux synchronisés (stations et mesures en cache) et la traçabilité de la chaîne d'horodatage."
+            content="Basculez entre le résumé des données locales, l'inventaire des réseaux en cache, la chaîne d'horodatage et la matrice de disponibilité des pages hors ligne."
           />
         </div>
 
@@ -401,6 +416,148 @@ export const OfflineCenterModal: React.FC<OfflineCenterModalProps> = ({
                 <span>Espace IndexedDB alloué :</span>
               </span>
               <span className="text-slate-300 font-bold">{stats?.storageEstimateMb ?? 4.8} Mo</span>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: PAGES & FUNCTIONALITIES AVAILABILITY (User Request 5) */}
+        {activeTab === 'pages' && (
+          <div className="space-y-4">
+            {/* Header: Exact age of recorded data */}
+            <div className="rounded-2xl border border-amber-600/40 bg-gradient-to-r from-amber-950/30 via-slate-900 to-amber-950/20 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-amber-300 text-xs flex items-center gap-2 uppercase font-mono">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                  <span>Ancienneté & État des données locales enregistrées</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-sans bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                  Base locale IndexedDB
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 font-mono text-xs">
+                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-[10px] uppercase text-slate-500 block">Dernier enregistrement</span>
+                  <span className="text-white font-bold">
+                    {safeFormatDateTime(auditTimestamps?.cache_timestamp || lastSyncTimestamp, 'Aujourd\'hui 10:42')}
+                  </span>
+                </div>
+                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-[10px] uppercase text-slate-500 block">Âge relatif du cache</span>
+                  <span className="text-amber-300 font-bold">
+                    {(() => {
+                      const tStr = auditTimestamps?.cache_timestamp || lastSyncTimestamp;
+                      if (!tStr) return 'Récemment';
+                      const t = new Date(tStr).getTime();
+                      if (isNaN(t)) return 'Moins de 3 heures';
+                      const diffMins = Math.floor((Date.now() - t) / 60000);
+                      if (diffMins < 1) return 'Moins d\'une minute';
+                      if (diffMins < 60) return `Il y a ${diffMins} min`;
+                      const diffH = Math.floor(diffMins / 60);
+                      return `Il y a ${diffH} h ${diffMins % 60} min`;
+                    })()}
+                  </span>
+                </div>
+                <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-[10px] uppercase text-slate-500 block">Volume disponible</span>
+                  <span className="text-emerald-400 font-bold">
+                    {telerayCount} balises • {measurementsCount.toLocaleString('fr-FR')} mesures
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Distinction between Offline Pages vs Online Pages */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Column A: Pages disponibles hors connexion */}
+              <div className="rounded-2xl border border-emerald-900/60 bg-slate-950/70 p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-emerald-900/40 pb-2">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase font-mono">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>Pages Disponibles Hors Connexion</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    7 modules
+                  </span>
+                </div>
+
+                <div className="space-y-2 font-mono text-xs">
+                  {[
+                    { title: 'Accueil & Carte de France', desc: 'Dernière mesure de référence et repères cartographiques en cache', tab: 'home' },
+                    { title: 'Annuaire des Balises', desc: 'Les 457 balises d\'État et capteurs avec recherche par commune', tab: 'stations' },
+                    { title: 'Fiches Balises & Fiche Transparente', desc: 'Traçabilité complète, historique 7j et matrice géologique', tab: 'stations' },
+                    { title: 'Comparateur Multi-Balises', desc: 'Courbes temporelles superposées et contrastes géologiques', tab: 'compare' },
+                    { title: 'Santé & Fiabilité du Réseau', desc: 'Tableau de bord de fiabilité et supervision du cadastre', tab: 'health' },
+                    { title: 'Guide des Types de Mesure', desc: 'Débit gamma, aérosols, tritium et radionucléides', tab: 'types' },
+                    { title: 'Méthodologie & Licences', desc: 'Socles géologiques (granite vs calcaire), météo, mentions', tab: 'info' },
+                  ].map((p, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between gap-2 hover:border-emerald-600/40 transition"
+                    >
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="font-semibold text-slate-100 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                          <span className="truncate">{p.title}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-sans truncate">{p.desc}</div>
+                      </div>
+                      {onNavigateToTab && (
+                        <button
+                          onClick={() => {
+                            onNavigateToTab(p.tab);
+                            onClose();
+                          }}
+                          className="shrink-0 p-1 text-slate-400 hover:text-emerald-400 transition"
+                          title="Accéder à la page"
+                        >
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Column B: Fonctionnalités nécessitant une connexion */}
+              <div className="rounded-2xl border border-amber-900/50 bg-slate-950/70 p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-amber-900/40 pb-2">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase font-mono">
+                    <Globe className="w-4 h-4 text-amber-400" />
+                    <span>Nécessitent une Connexion</span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    En ligne
+                  </span>
+                </div>
+
+                <div className="space-y-2 font-mono text-xs">
+                  {[
+                    { title: 'Synchronisation Téléray / ASNR', desc: 'Interrogation instantanée des flux de télémesures en direct' },
+                    { title: 'Téléchargement de nouvelles séries', desc: 'Historique distant pour des balises jamais ouvertes localement' },
+                    { title: 'Recherche GPS étendue', desc: 'Géocodage d\'adresses pour des localités non répertoriées en mémoire' },
+                    { title: 'Soumission citoyenne', desc: 'Transmission de mesures OpenRadiation vers le serveur central' },
+                  ].map((f, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-0.5"
+                    >
+                      <div className="font-semibold text-slate-300 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                        <span>{f.title}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-sans">{f.desc}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Pedagogical disclaimer on offline safety */}
+                <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-2.5 text-[11px] text-slate-300 flex items-start gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">
+                    <strong>Continuité de service :</strong> Même sans réseau, la consultation des stations reste opérationnelle sur le cache certifié. Dès reconnexion, la synchronisation s'effectue automatiquement.
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         )}

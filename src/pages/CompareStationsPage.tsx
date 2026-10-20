@@ -93,10 +93,26 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
     }));
   };
 
-  // Filter available stations for the addition modal/dropdown
+  // Determine target measurement type and unit from currently selected stations to ensure comparable data
+  const targetMeasurementType = useMemo(() => {
+    const firstSelected = stations.find(s => selectedIds.includes(s.id));
+    return firstSelected?.measurement_type || 'AMBIENT_GAMMA_DOSE_RATE';
+  }, [stations, selectedIds]);
+
+  const targetUnit = useMemo(() => {
+    const firstSelected = stations.find(s => selectedIds.includes(s.id));
+    return firstSelected?.unit || 'nSv/h';
+  }, [stations, selectedIds]);
+
+  // Filter available stations for the addition modal/dropdown: STRICTLY SAME TYPE & UNIT (User Request 3)
   const availableToAdd = useMemo(() => {
     return stations
       .filter(s => !selectedIds.includes(s.id))
+      .filter(s => {
+        const sType = s.measurement_type || 'AMBIENT_GAMMA_DOSE_RATE';
+        const sUnit = s.unit || 'nSv/h';
+        return sType === targetMeasurementType && sUnit === targetUnit;
+      })
       .filter(s => {
         if (!searchQuery) return true;
         const q = searchQuery.toLowerCase();
@@ -107,7 +123,7 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
         );
       })
       .slice(0, 10);
-  }, [stations, selectedIds, searchQuery]);
+  }, [stations, selectedIds, searchQuery, targetMeasurementType, targetUnit]);
 
   return (
     <div className="space-y-6 pb-20 md:pb-8">
@@ -131,7 +147,7 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
               />
             </h1>
             <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Superposez en temps réel les mesures et métriques de plusieurs balises gamma pour visualiser l'impact de la géologie naturelle (granite vs calcaire) et les variations métrologiques du territoire.
+              Superposez en temps réel les mesures et métriques de plusieurs balises de même nature pour analyser l'impact du socle géologique naturel et les variations météorologiques sans confusion sanitaire.
             </p>
           </div>
 
@@ -165,6 +181,22 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
               align="end"
               content="Sélections préconfigurées pour comparer directement les extrêmes naturels : trio national de référence, socles granitiques anciens (Limousin, Bretagne, Vosges ~120-150 nSv/h) vs plaines sédimentaires calcaires (Bassin parisien, Aquitaine ~70-90 nSv/h)."
             />
+          </div>
+        </div>
+
+        {/* Comparable Data Constraint Indicator (Feature 3 user requirement) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs font-mono">
+          <div className="flex items-center gap-2 text-slate-300">
+            <Layers className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Grandeur homogène comparée :</span>
+            <span className="font-bold text-white bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+              {targetMeasurementType === 'ATMOSPHERIC_AEROSOLS'
+                ? 'Aérosols atmosphériques (µBq/m³)'
+                : `Débit de dose gamma ambiant (${targetUnit})`}
+            </span>
+          </div>
+          <div className="text-[11px] text-slate-400 font-sans">
+            Condition de comparabilité : même type physique et unité commune garantis
           </div>
         </div>
 
@@ -256,6 +288,22 @@ export const CompareStationsPage: React.FC<CompareStationsPageProps> = ({
               )}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Feature 3 User Requirement: Explicit Non-Alarm Pedagogical Banner */}
+      <div className="rounded-2xl border border-amber-500/40 bg-amber-950/20 p-4 text-xs flex items-start gap-3 shadow-lg">
+        <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+        <div className="space-y-1.5">
+          <div className="font-bold text-amber-300 font-mono text-[11px] uppercase tracking-wide flex items-center gap-2">
+            <span>Règle d'interprétation métrologique : Ne pas transformer un écart en alerte sanitaire</span>
+          </div>
+          <p className="text-slate-300 leading-relaxed text-[11px]">
+            Un contraste numérique entre deux balises (par exemple <strong>75 nSv/h à Paris</strong> contre <strong>142 nSv/h à Limoges</strong>) s'explique entièrement par la nature géologique du sous-sol (socle granitique ancien riche en radioéléments naturels vs couches sédimentaires calcaires) et par l'altitude.
+          </p>
+          <p className="text-slate-300 leading-relaxed text-[11px]">
+            <strong>Cet écart est parfaitement naturel, stable dans le temps et ne constitue en aucun cas un risque ou une alerte sanitaire.</strong> Les seuils d'alerte de sécurité civile ne se déclenchent qu'en cas d'élévation anormale soudaine par rapport au bruit de fond propre à une station donnée.
+          </p>
         </div>
       </div>
 

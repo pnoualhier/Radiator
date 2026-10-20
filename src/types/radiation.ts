@@ -178,6 +178,10 @@ export interface NetworkHealthSummary {
   status: string;
   global_status: string;
   last_sync_timestamp: string;
+  last_sync_iso?: string;
+  total_registered_stations: number;
+  stations_transmitting_recent: number;
+  unavailable_sources_count: number;
   teleray_total_stations: number;
   teleray_active_stations: number;
   teleray_offline_stations: number;

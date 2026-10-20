@@ -6,6 +6,8 @@ import { Last24hRadiationChart } from '../components/Last24hRadiationChart';
 import { RadiationGauge } from '../components/RadiationGauge';
 import { DataNatureBadge } from '../components/DataNatureBadge';
 import { WhyThisValuePanel } from '../components/WhyThisValuePanel';
+import { TransparentMeasurementSheet } from '../components/TransparentMeasurementSheet';
+import { ExportDataModal } from '../components/ExportDataModal';
 import { HelpTooltip } from '../components/HelpTooltip';
 import { safeFormatTime, safeFormatDateTime, safeFormatNumber } from '../utils/dateUtils';
 import {
@@ -24,6 +26,7 @@ import {
   Server,
   Database,
   BookOpen,
+  Download,
 } from 'lucide-react';
 
 interface StationDetailPageProps {
@@ -48,6 +51,7 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
   const [statistics, setStatistics] = useState<StationStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [periodHours, setPeriodHours] = useState(168); // 7 days
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -206,6 +210,15 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
                 <span>Comparer cette balise</span>
               </button>
             )}
+
+            <button
+              onClick={() => setIsExportModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 px-3.5 py-2 text-xs font-mono font-semibold text-emerald-300 hover:text-white transition shadow"
+              title="Exporter l'historique complet en CSV ou JSON"
+            >
+              <Download className="w-4 h-4 text-emerald-400" />
+              <span>Exporter CSV / JSON</span>
+            </button>
           </div>
         </div>
       </div>
@@ -517,88 +530,12 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
           />
         </div>
 
-        {/* Technical Metadata Box */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-xs flex flex-col justify-between text-xs space-y-2.5">
-          <div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-mono uppercase text-slate-500">Traçabilité & Horodatage</span>
-              <HelpTooltip
-                title="Traçabilité métrologique et certification"
-                position="top"
-                align="end"
-                content="Chaîne d'intégrité de la mesure : 1) Horodatage d'échantillonnage sur le détecteur physique, 2) Ingestion sécurisée par le serveur central avec contrôle qualité automatique, 3) Persistance chiffrée dans la base locale Dexie de votre navigateur pour consultation hors connexion."
-              />
-            </div>
-            <div className="mt-1.5 space-y-1.5 font-mono text-[11px]">
-              <div className="flex items-center justify-between text-slate-300 bg-slate-950/70 px-2 py-1 rounded border border-slate-800/80">
-                <span className="flex items-center gap-1.5 text-amber-400">
-                  <Radio className="w-3 h-3 text-amber-400" />
-                  <span>Mesure effectuée :</span>
-                </span>
-                <span className="text-white font-semibold">
-                  {safeFormatTime(latest?.data_timestamp || latest?.measured_at)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-slate-300 bg-slate-950/70 px-2 py-1 rounded border border-slate-800/80">
-                <span className="flex items-center gap-1.5 text-sky-400">
-                  <Server className="w-3 h-3 text-sky-400" />
-                  <span>Reçue serveur :</span>
-                </span>
-                <span className="text-white font-semibold">
-                  {safeFormatTime(latest?.server_timestamp || latest?.received_at)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-slate-300 bg-slate-950/70 px-2 py-1 rounded border border-slate-800/80">
-                <span className="flex items-center gap-1.5 text-emerald-400">
-                  <Database className="w-3 h-3 text-emerald-400" />
-                  <span>Mise en cache :</span>
-                </span>
-                <span className="text-white font-semibold">
-                  {safeFormatTime(latest?.cache_timestamp, undefined, 'Locale (Dexie)')}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-800 pt-2">
-            <span className="text-[11px] font-mono uppercase text-slate-500">Nature de la donnée</span>
-            <div className="mt-1">
-              <DataNatureBadge
-                dataNature={latest?.data_nature || station.data_nature}
-                validationStatus={latest?.validation_status || station.validation_status}
-                isSimulated={latest?.is_simulated || station.is_simulated}
-              />
-            </div>
-          </div>
-
-          <div className="border-t border-slate-800 pt-2">
-            <span className="text-[11px] font-mono uppercase text-slate-500">Statut qualité de la donnée</span>
-            <div className="font-mono text-xs font-semibold text-emerald-400 mt-0.5">
-              {latest?.quality_status || 'VALID'} ({latest?.validation_status || 'AUTO_VALIDATED'})
-            </div>
-          </div>
-
-          <div className="border-t border-slate-800 pt-2">
-            <span className="text-[11px] font-mono uppercase text-slate-500">Organisme producteur</span>
-            <div className="text-xs font-medium text-slate-300 mt-0.5">
-              {station.source_name || station.source_code || 'ASNR-IRSN'}
-            </div>
-          </div>
-
-          {onNavigateToMethodology && (
-            <div className="border-t border-slate-800 pt-2">
-              <button
-                onClick={onNavigateToMethodology}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[11px] font-mono font-semibold transition"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                <span>Consulter la Méthodologie (Géologie, Pluie, Radon)</span>
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Feature 2 User Requirement: Fiche de mesure transparente */}
+        <TransparentMeasurementSheet
+          station={station}
+          measurement={latest}
+          onNavigateToMethodology={onNavigateToMethodology}
+        />
       </div>
 
       {/* Feature requested by user: « Pourquoi cette valeur ? » */}
@@ -625,70 +562,104 @@ export const StationDetailPage: React.FC<StationDetailPageProps> = ({
       />
 
       {/* Recent Measurements Log Table */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-xs">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-            <span>Derniers enregistrements vérifiés</span>
-            <HelpTooltip
-              title="Journal des mesures vérifiées"
-              position="top"
-              align="start"
-              content="Registre historique des 10 derniers relevés horodatés de cette balise. Indique la valeur numérique brute, l'équivalent dosimétrique ou le nucléide recherché, ainsi que le label d'assurance qualité (VALID, AUTO_VALIDATED)."
-            />
-          </h3>
-          <span className="text-[10px] font-mono text-slate-500">
-            Contrôle qualité ASNR
-          </span>
+      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 backdrop-blur-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2 font-mono">
+              <span>Journal des mesures vérifiées</span>
+              <HelpTooltip
+                title="Journal des mesures vérifiées"
+                position="top"
+                align="start"
+                content="Registre historique des derniers relevés horodatés de cette balise. Documente l'heure de mesure sur le capteur physique, l'heure de récupération serveur, la valeur mesurée et le statut certifié (LIVE, CACHED, DEMO)."
+              />
+            </h3>
+            <span className="text-[10px] font-mono text-slate-500">
+              Contrôle qualité ASNR
+            </span>
+          </div>
+
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-300 font-mono text-[11px] font-semibold self-start sm:self-auto transition"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Exporter l'historique (CSV / JSON)</span>
+          </button>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
             <thead>
               <tr className="border-b border-slate-800 text-slate-500 uppercase text-[10px]">
-                <th className="pb-2">Date & Heure</th>
+                <th className="pb-2">Heure Mesure</th>
+                <th className="pb-2">Heure Récupération</th>
                 <th className="pb-2">Valeur ({latest?.unit || station.unit || 'nSv/h'})</th>
                 <th className="pb-2">
                   {station.measurement_type === 'ATMOSPHERIC_AEROSOLS'
-                    ? 'Nucléide analysé'
+                    ? 'Nucléide'
                     : station.measurement_type === 'WATER_RADIOACTIVITY'
-                    ? 'Vecteur hydrologique'
+                    ? 'Vecteur'
                     : 'Équivalent µSv/h'}
                 </th>
+                <th className="pb-2">Statut Donnée</th>
                 <th className="pb-2">Qualité</th>
-                <th className="pb-2">Validation</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {measurements.slice(-10).reverse().map(m => (
-                <tr key={m.id} className="text-slate-300">
-                  <td className="py-2 text-slate-400">
-                    {safeFormatDateTime(m.measured_at)}
-                  </td>
-                  <td className="py-2 font-bold text-amber-300">
-                    {safeFormatNumber(m.value, m.value < 1 ? 2 : 1)} {m.unit}
-                  </td>
-                  <td className="py-2 text-slate-400">
-                    {station.measurement_type === 'ATMOSPHERIC_AEROSOLS' ? (
-                      <span className="text-teal-300 font-semibold">{station.radionuclide_focus || 'Cs-137'}</span>
-                    ) : station.measurement_type === 'WATER_RADIOACTIVITY' ? (
-                      <span className="text-cyan-300 font-semibold">{station.radionuclide_focus || 'Tritium (H-3)'}</span>
-                    ) : (
-                      `${(m.value / 1000).toFixed(3)} µSv/h`
-                    )}
-                  </td>
-                  <td className="py-2">
-                    <span className="rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 text-[10px]">
-                      {m.quality_status}
-                    </span>
-                  </td>
-                  <td className="py-2 text-slate-500">
-                    {m.validation_status}
-                  </td>
-                </tr>
-              ))}
+              {measurements.slice(-10).reverse().map(m => {
+                const dataNat = m.data_nature || station.data_nature || (station.is_simulated ? 'DEMO' : 'LIVE');
+                return (
+                  <tr key={m.id} className="text-slate-300 hover:bg-slate-800/30 transition">
+                    <td className="py-2 text-slate-300">
+                      {safeFormatDateTime(m.measured_at || m.data_timestamp)}
+                    </td>
+                    <td className="py-2 text-sky-400">
+                      {safeFormatTime(m.server_timestamp || m.received_at, undefined, 'Ingestion directe')}
+                    </td>
+                    <td className="py-2 font-bold text-amber-300">
+                      {safeFormatNumber(m.value, m.value < 1 ? 2 : 1)} {m.unit}
+                    </td>
+                    <td className="py-2 text-slate-400">
+                      {station.measurement_type === 'ATMOSPHERIC_AEROSOLS' ? (
+                        <span className="text-teal-300 font-semibold">{station.radionuclide_focus || 'Cs-137'}</span>
+                      ) : station.measurement_type === 'WATER_RADIOACTIVITY' ? (
+                        <span className="text-cyan-300 font-semibold">{station.radionuclide_focus || 'Tritium (H-3)'}</span>
+                      ) : (
+                        `${(m.value / 1000).toFixed(3)} µSv/h`
+                      )}
+                    </td>
+                    <td className="py-2">
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold border ${
+                        dataNat === 'LIVE'
+                          ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800'
+                          : dataNat === 'CACHED'
+                          ? 'bg-amber-950/80 text-amber-300 border-amber-800'
+                          : 'bg-purple-950/80 text-purple-300 border-purple-800'
+                      }`}>
+                        {dataNat}
+                      </span>
+                    </td>
+                    <td className="py-2">
+                      <span className="text-[10px] text-slate-400">
+                        {m.quality_status || 'VALID'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Feature 4: Modal d'exportation de l'historique CSV / JSON */}
+      <ExportDataModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        station={station}
+        measurements={measurements}
+      />
     </div>
   );
 };

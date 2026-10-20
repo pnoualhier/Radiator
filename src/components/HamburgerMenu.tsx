@@ -51,6 +51,7 @@ interface NavCategory {
     action?: () => void;
     badge?: string | number;
     badgeColor?: string;
+    offlineSupported?: boolean;
   }[];
 }
 
@@ -86,18 +87,21 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           label: 'Accueil',
           description: 'Vue nationale, dernière mesure et état du réseau',
           icon: Home,
+          offlineSupported: true,
         },
         {
           id: 'map',
           label: 'Carte Interactive',
           description: 'Cartographie des 457 balises géolocalisées',
           icon: Map,
+          offlineSupported: true,
         },
         {
           id: 'stations',
           label: 'Annuaire des Stations',
           description: 'Liste complète des sondes avec recherche et filtres',
           icon: Radio,
+          offlineSupported: true,
         },
       ],
     },
@@ -109,14 +113,16 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         {
           id: 'compare',
           label: 'Comparateur de Stations',
-          description: 'Superposition et analyse croisée jusqu\'à 4 balises',
+          description: 'Superposition et analyse croisée jusqu\'à 6 balises comparables',
           icon: GitCompare,
+          offlineSupported: true,
         },
         {
           id: 'types',
           label: 'Types de Mesure',
           description: 'Dose gamma ambiante, aérosols OPERA-Air et fleuves',
           icon: Layers,
+          offlineSupported: true,
         },
         {
           id: 'timeline',
@@ -125,6 +131,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           icon: History,
           badge: '2026',
           badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+          offlineSupported: true,
         },
       ],
     },
@@ -140,18 +147,21 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           icon: AlertTriangle,
           badge: alertCount > 0 ? alertCount : undefined,
           badgeColor: 'bg-red-500 text-white',
+          offlineSupported: false,
         },
         {
           id: 'health',
           label: 'Santé Réseau',
           description: 'Disponibilité 99,1%, latences et télésurveillance',
           icon: Activity,
+          offlineSupported: false,
         },
         {
           id: 'sources',
           label: 'Registre des Sources',
           description: 'Téléray, EURDEP, OpenRadiation, Safecast',
           icon: Database,
+          offlineSupported: true,
         },
       ],
     },
@@ -165,11 +175,13 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           label: 'Méthodologie Scientifique',
           description: 'Dose vs Activité, Géologie, Pluie/Radon, Cosmique',
           icon: BookOpen,
+          offlineSupported: true,
         },
         {
           label: 'Visite Guidée / Onboarding',
           description: 'Parcours explicatif des fonctionnalités clés',
           icon: Compass,
+          offlineSupported: true,
           action: () => {
             onClose();
             onOpenTour();
@@ -179,6 +191,7 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           label: 'Mentions Légales & Non-Responsabilité',
           description: 'Conditions d\'utilisation et clause de décharge d\'auteur',
           icon: ShieldAlert,
+          offlineSupported: true,
           action: () => {
             onClose();
             onOpenDisclaimer();
@@ -225,14 +238,14 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           </button>
         </div>
 
-        {/* Quick Action Top Bar (PWA Install + Theme Toggle + Offline Center) */}
-        <div className="p-3 border-b border-slate-800/80 bg-slate-950/40 grid grid-cols-2 gap-2 text-[11px]">
+        {/* Quick Action Top Bar (Theme Toggle + Settings + Offline Center) */}
+        <div className="p-3 border-b border-slate-800/80 bg-slate-950/40 grid grid-cols-3 gap-2 text-[11px]">
           <button
             onClick={toggleTheme}
-            className="flex items-center justify-center gap-2 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-white transition font-semibold"
+            className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-white transition font-semibold"
           >
             {isLight ? <Moon className="w-3.5 h-3.5 text-sky-400" /> : <Sun className="w-3.5 h-3.5 text-amber-400" />}
-            <span>{isLight ? 'Thème Sombre' : 'Thème Clair'}</span>
+            <span>{isLight ? 'Sombre' : 'Clair'}</span>
           </button>
 
           <button
@@ -240,11 +253,25 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
               onClose();
               onOpenSettings();
             }}
-            className="flex items-center justify-center gap-2 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-white transition font-semibold"
+            className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-white transition font-semibold"
           >
             <Settings className="w-3.5 h-3.5 text-amber-400" />
             <span>Paramètres</span>
           </button>
+
+          {onOpenOfflineCenter && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenOfflineCenter();
+              }}
+              className="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition font-semibold"
+              title="Centre d'Information Hors Connexion & Cache"
+            >
+              <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+              <span>Hors Ligne</span>
+            </button>
+          )}
         </div>
 
         {/* Scrollable Categories List */}
@@ -293,8 +320,23 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                           }`}
                         />
                         <div className="truncate">
-                          <div className={`text-xs ${isActive ? 'text-slate-950 font-bold' : 'text-white'}`}>
-                            {item.label}
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs ${isActive ? 'text-slate-950 font-bold' : 'text-white'}`}>
+                              {item.label}
+                            </span>
+                            {item.offlineSupported !== undefined && (
+                              <span
+                                className={`text-[9px] font-mono font-medium px-1.5 py-0.2 rounded-full ${
+                                  isActive
+                                    ? 'bg-slate-950/20 text-slate-950'
+                                    : item.offlineSupported
+                                    ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-800/50'
+                                    : 'bg-amber-950/70 text-amber-300 border border-amber-800/50'
+                                }`}
+                              >
+                                {item.offlineSupported ? '🟢 Hors ligne' : '🟡 En ligne'}
+                              </span>
+                            )}
                           </div>
                           <div
                             className={`text-[10px] truncate ${

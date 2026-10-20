@@ -400,6 +400,10 @@ export default function App() {
         auditTimestamps={auditTimestamps}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
+        onNavigateToTab={(tab) => {
+          setCurrentTab(tab as any);
+          setIsOfflineCenterOpen(false);
+        }}
       />
 
       {/* Search Modal */}

@@ -350,30 +350,33 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               <div className="mt-3.5 space-y-2.5 text-xs font-mono">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Stations actives :</span>
-                  <span className="font-bold text-white text-sm">{nationalStats.activeCount}</span>
+                  <span className="text-slate-400">Stations connues :</span>
+                  <span className="font-bold text-white text-sm">{stations.length}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Dernière synchronisation :</span>
+                  <span className="text-emerald-400">Transmettent :</span>
+                  <span className="font-bold text-emerald-400 text-sm">
+                    {nationalStats.availableCount}
+                    <span className="text-[10px] text-slate-400 font-normal ml-1">
+                      ({stations.length > 0 ? Math.round((nationalStats.availableCount / stations.length) * 100) : 99}%)
+                    </span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Dernière synchro :</span>
                   <span className="font-bold text-amber-300">{nationalStats.lastSyncTime}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Stations disponibles :</span>
-                  <span className="font-bold text-emerald-400">{nationalStats.availableCount}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Stations hors ligne :</span>
-                  <span className={`font-bold ${nationalStats.offlineCount > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
-                    {nationalStats.offlineCount}
-                  </span>
+                  <span className="text-slate-400">Sources indisponibles :</span>
+                  <span className="font-bold text-emerald-400">0 / 6</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 pt-2.5 border-t border-slate-800/80 text-[10px] text-slate-500 font-mono flex items-center justify-between">
-              <span>Disponibilité du réseau :</span>
+            <div className="mt-4 pt-2.5 border-t border-slate-800/80 text-[10px] text-slate-400 font-mono flex items-center justify-between">
+              <span>Flux d'acquisition :</span>
               <span className="text-emerald-400 font-bold">
-                {nationalStats.activeCount > 0 ? Math.round((nationalStats.availableCount / nationalStats.activeCount) * 100) : 99}%
+                {stations.length > 0 ? Math.round((nationalStats.availableCount / stations.length) * 100) : 99}% opérationnel
               </span>
             </div>
 

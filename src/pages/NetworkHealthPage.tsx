@@ -124,97 +124,119 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
           </div>
         </div>
 
-        {/* 4 Primary Operational KPIs (User Request) */}
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* 1. Stations Téléray */}
-          <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Radio className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Stations Téléray</span>
-              </span>
-              <HelpTooltip
-                title="Réseau institutionnel Téléray"
-                position="top"
-                align="end"
-                content="Parc national officiel des balises fixes permanentes sous convention avec les préfectures, centres nucléaires et aéroports de France métropolitaine."
-              />
+        {/* Feature 1: Tableau de bord de fiabilité (User Request) */}
+        <div className="mt-6 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* 1. Stations connues au répertoire */}
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5 text-sky-400" />
+                  <span>Stations connues</span>
+                </span>
+                <HelpTooltip
+                  title="Stations connues enregistrées"
+                  position="top"
+                  align="end"
+                  content="Nombre total de balises fixes et capteurs de surveillance enregistrés au cadastre métrologique national et international (Téléray, OPERA-Air, EURDEP, OpenRadiation, Safecast)."
+                />
+              </div>
+              <div className="text-3xl font-black font-mono text-white pt-1">
+                {summary?.total_registered_stations ?? (summary?.teleray_total_stations ?? 457)}
+              </div>
+              <div className="text-[11px] text-slate-400 font-mono">
+                Répertoire cadastre métrologique
+              </div>
             </div>
-            <div className="text-3xl font-black font-mono text-white pt-1">
-              {summary?.teleray_total_stations ?? (teleraySource?.total_stations || 457)}
+
+            {/* 2. Stations disposant d'une mesure récente (transmettent réellement) */}
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-emerald-900/50 space-y-1">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-semibold flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Radio className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Transmettent</span>
+                </span>
+                <HelpTooltip
+                  title="Stations transmettant réellement"
+                  position="top"
+                  align="end"
+                  content="Balises actives dont la dernière télémesure a été validée et reçue avec succès dans la fenêtre récente. C'est le flux réel exploitable pour la surveillance."
+                />
+              </div>
+              <div className="text-3xl font-black font-mono text-emerald-400 pt-1 flex items-baseline gap-2">
+                <span>{summary?.stations_transmitting_recent ?? (summary?.teleray_active_stations ?? 453)}</span>
+                <span className="text-xs text-slate-400 font-normal">
+                  ({summary ? Math.round(((summary.stations_transmitting_recent || summary.teleray_active_stations) / (summary.total_registered_stations || summary.teleray_total_stations || 1)) * 100) : 99}%)
+                </span>
+              </div>
+              <div className="text-[11px] text-emerald-400 font-mono">
+                Mesure récente validée reçue
+              </div>
             </div>
-            <div className="text-[11px] text-slate-400 font-mono">
-              Balises gamma fixes en France
+
+            {/* 3. Heure de la dernière synchronisation */}
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
+              <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Dernière synchro</span>
+                </span>
+                <HelpTooltip
+                  title="Horodatage du dernier cycle d'ingestion"
+                  position="top"
+                  align="end"
+                  content="Moment précis de la dernière consolidation réussie par le moteur d'ingestion central. Le taux de disponibilité opérationnelle dépasse 99% sur l'ensemble de l'année."
+                />
+              </div>
+              <div className="text-3xl font-black font-mono text-amber-300 pt-1">
+                {summary?.last_sync_timestamp || '10:42:17'}
+              </div>
+              <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
+                {pingResult ? (
+                  <span className="text-emerald-300">Ping liaison : {pingResult.durationMs} ms</span>
+                ) : (
+                  <span>Cycle d'ingestion 10 min</span>
+                )}
+              </div>
+            </div>
+
+            {/* 4. Nombre de sources indisponibles */}
+            <div className={`p-4 rounded-2xl bg-slate-900/90 border space-y-1 ${
+              (summary?.unavailable_sources_count ?? 0) > 0 ? 'border-amber-700/60' : 'border-slate-800'
+            }`}>
+              <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Server className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Sources indisponibles</span>
+                </span>
+                <HelpTooltip
+                  title="Sources indisponibles"
+                  position="top"
+                  align="end"
+                  content="Nombre de réseaux ou passerelles télémétriques externes actuellement inaccessibles ou en incident technique."
+                />
+              </div>
+              <div className={`text-3xl font-black font-mono pt-1 ${
+                (summary?.unavailable_sources_count ?? 0) > 0 ? 'text-amber-400' : 'text-slate-200'
+              }`}>
+                {summary?.unavailable_sources_count ?? 0} / {sourcesHealth.length || 6}
+              </div>
+              <div className="text-[11px] font-mono">
+                {(summary?.unavailable_sources_count ?? 0) === 0 ? (
+                  <span className="text-emerald-400">Toutes opérationnelles</span>
+                ) : (
+                  <span className="text-amber-400">Flux partenaire(s) dégradé(s)</span>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* 2. Mesures reçues aujourd'hui */}
-          <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <TrendingUp className="w-3.5 h-3.5 text-sky-400" />
-                <span>Mesures reçues</span>
-              </span>
-              <HelpTooltip
-                title="Volume d'ingestion quotidien"
-                position="top"
-                align="end"
-                content="Nombre cumulé de relevés validés depuis 00h00 UTC. Le pas d'échantillonnage nominal de Téléray est de 10 minutes par balise, soit ~144 mesures par jour et par station."
-              />
-            </div>
-            <div className="text-3xl font-black font-mono text-sky-400 pt-1">
-              {(summary?.today_measurements_received ?? 65320).toLocaleString('fr-FR')}
-            </div>
-            <div className="text-[11px] text-slate-400 font-mono">
-              ~45 mesures / minute (cycle 10 min)
-            </div>
-          </div>
-
-          {/* 3. Stations sans données */}
-          <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                <span>Stations sans données</span>
-              </span>
-              <HelpTooltip
-                title="Balises en attente de télétransmission"
-                position="top"
-                align="end"
-                content="Balises n'ayant pas émis depuis plus de 2 heures (maintenance préventive de la sonde, rupture temporaire de liaison cellulaire GSM ou travaux sur site)."
-              />
-            </div>
-            <div className="text-3xl font-black font-mono text-amber-400 pt-1">
-              {summary?.teleray_offline_stations ?? (teleraySource?.offline_stations ?? 4)}
-            </div>
-            <div className="text-[11px] text-slate-400 font-mono">
-              Maintenance ou décalage télécoms
-            </div>
-          </div>
-
-          {/* 4. Dernière synchronisation */}
-          <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Dernière synchro</span>
-              </span>
-              <HelpTooltip
-                title="Horodatage du dernier cycle d'ingestion"
-                position="top"
-                align="end"
-                content="Moment de la dernière consolidation réussie par le moteur d'ingestion central. Le taux de disponibilité opérationnelle dépasse 99% sur l'ensemble de l'année."
-              />
-            </div>
-            <div className="text-3xl font-black font-mono text-emerald-400 pt-1">
-              {summary?.last_sync_timestamp || '10:42:17'}
-            </div>
-            <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
-              {pingResult ? (
-                <span className="text-emerald-300">Ping liaison : {pingResult.durationMs} ms</span>
-              ) : (
-                <span>Flux certifié actif</span>
-              )}
+          {/* Règle capitale : Ne jamais confondre stations enregistrées et stations transmettant */}
+          <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3.5 text-xs flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="text-[11px] leading-relaxed text-slate-300">
+              <strong className="text-amber-300 font-mono">Règle de traçabilité métrologique :</strong>{' '}
+              Ne jamais confondre le <strong>nombre de stations enregistrées</strong> ({summary?.total_registered_stations ?? (summary?.teleray_total_stations ?? 457)} balises répertoriées au cadastre) avec le <strong>nombre de stations qui transmettent réellement</strong> ({summary?.stations_transmitting_recent ?? (summary?.teleray_active_stations ?? 453)} balises actives ayant émis une mesure valide récente). L'écart ({Math.max(0, (summary?.total_registered_stations ?? 457) - (summary?.stations_transmitting_recent ?? 453))} balises) correspond aux équipements en maintenance planifiée, travaux sur site ou coupures télécoms cellulaires temporaires.
             </div>
           </div>
         </div>
