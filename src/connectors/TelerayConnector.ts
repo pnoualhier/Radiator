@@ -1,25 +1,29 @@
 /**
  * 🛰️ TelerayConnector
  *
- * Connecteur officiel pour le réseau national de télémesure gamma Téléray (ASNR / IRSN).
+ * Connecteur officiel pour le réseau national de télésurveillance gamma Téléray (ASNR / IRSN).
  *
- * Spécifications validées :
+ * Spécifications institutionnelles vérifiées :
  * - Autorité de tutelle : ASNR (Autorité de Sûreté Nucléaire et de Radioprotection), issue de la fusion ASN-IRSN.
  * - Point d'accès officiel : https://teleray.asnr.fr/api/stations
- * - Format de données : GeoJSON FeatureCollection
- * - Identifiant balise : properties.irsnId (entier unique)
+ * - Format de données : GeoJSON FeatureCollection (RFC 7946)
+ * - Identifiant balise : properties.irsnId (entier unique au cadastre national)
  * - Grandeur physique : Débit d'équivalent de dose ambiant H*(10)
  * - Unité réglementaire : nSv/h (nanoSieverts par heure)
- * - Statut de validation :
- *     - VERIFIED : Accès réseau confirmé, schéma GeoJSON conforme (479 balises nationales)
- *     - UNVERIFIED / NON VÉRIFIÉ : Si l'accès distant n'a pas pu être validé ou si la télémesure
- *       instantanée n'est pas exposée sans authentification.
  *
- * RÈGLE D'OR P0 :
- * AUCUNE MESURE SIMULÉE NE DOIT ÊTRE PRÉSENTÉE COMME MESURE ASNR / TÉLÉRAY.
- * Toute valeur non reçue de l'infrastructure officielle est marquée 'UNAVAILABLE'
- * ou 'NON VÉRIFIÉ'. Les simulations sont strictement cantonnées au mode 'DEMO'.
+ * RÈGLE D'OR MÉTHODOLOGIQUE & ÉTHIQUE (P0) :
+ * 1. SÉPARATION STRICTE : Les données réelles (REAL), les données en cache (CACHED),
+ *    les données simulées (SIMULATED/DEMO) et les données indisponibles (UNAVAILABLE)
+ *    sont rigoureusement cloisonnées.
+ * 2. INTERDICTION DE MESURE FICTIVE EN CAS DE PANNE :
+ *    Une défaillance, interruption ou indisponibilité de l'API Téléray ne doit JAMAIS
+ *    produire une mesure synthétique avec des valeurs nominales pouvant sembler officielles.
+ *    En cas de panne, le connecteur retourne obligatoirement `UNAVAILABLE` avec valeur `null`.
+ * 3. AUCUN REPLI SUR DONNÉES DE TEST : Le connecteur ne bascule jamais sur des fixtures
+ *    de test en production. Les tests et démonstrations requièrent un flag explicite.
  */
+
+export type DataNature = 'REAL' | 'CACHED' | 'SIMULATED' | 'UNAVAILABLE';
 
 export interface TelerayRawStationProperties {
   irsnId: number;
@@ -54,8 +58,8 @@ export interface TelerayFeatureCollection {
 export interface TelerayAccessValidationReport {
   endpoint_url: string;
   tested_at: string;
-  status: 'VERIFIED' | 'UNVERIFIED';
-  status_label: 'VÉRIFIÉ' | 'NON VÉRIFIÉ';
+  status: 'VERIFIED' | 'UNVERIFIED' | 'OUTAGE';
+  status_label: 'VÉRIFIÉ' | 'NON VÉRIFIÉ' | 'PANNE DÉTECTÉE';
   http_code?: number;
   latency_ms: number;
   network_size?: number;
@@ -63,6 +67,7 @@ export interface TelerayAccessValidationReport {
   unit: 'nSv/h';
   authority: 'ASNR / IRSN';
   notes: string;
+  data_nature: DataNature;
   details?: {
     stations_received: number;
     sample_station?: {
@@ -80,12 +85,15 @@ export class TelerayConnector {
   public static readonly LEGACY_REDIRECT_URL = 'https://teleray.irsn.fr';
   public static readonly OFFICIAL_UNIT = 'nSv/h';
 
+  // Cache mémoire uniquement pour les balises authentifiées de l'ASNR (sans jamais synthétiser de mesure)
   private static cachedStations: TelerayStationFeature[] = [];
   private static lastValidationReport: TelerayAccessValidationReport | null = null;
   private static lastFetchTimestamp: number = 0;
+  private static cacheTimestamp: string | null = null;
 
   /**
-   * Valide le véritable accès à l'API publique Téléray (ASNR)
+   * Valide le véritable accès à l'API publique Téléray (ASNR).
+   * En cas d'échec ou de timeout, AUCUNE mesure fictive n'est générée.
    */
   public static async validateAccess(timeoutMs: number = 6000): Promise<TelerayAccessValidationReport> {
     const startTime = Date.now();
@@ -117,7 +125,8 @@ export class TelerayConnector {
           schema_valid: false,
           unit: 'nSv/h',
           authority: 'ASNR / IRSN',
-          notes: `L'API distante a retourné un statut HTTP ${res.status}. Le flux est actuellement non vérifié.`,
+          data_nature: 'UNAVAILABLE',
+          notes: `L'API distante a retourné un statut HTTP ${res.status}. Le flux officiel Téléray est actuellement non vérifié.`,
         };
         this.lastValidationReport = report;
         return report;
@@ -125,7 +134,7 @@ export class TelerayConnector {
 
       const json = await res.json() as TelerayFeatureCollection;
 
-      // Validation stricte du schéma GeoJSON Téléray
+      // Validation stricte du schéma GeoJSON Téléray institutionnel
       const isValidCollection = json && json.type === 'FeatureCollection' && Array.isArray(json.features);
       const firstFeature = json?.features?.[0];
       const hasValidProperties =
@@ -148,11 +157,12 @@ export class TelerayConnector {
         schema_valid: isVerified,
         unit: 'nSv/h',
         authority: 'ASNR / IRSN',
+        data_nature: isVerified ? 'REAL' : 'UNAVAILABLE',
         notes: isVerified
           ? `Accès Téléray validé : ${json.total || json.features.length} balises nationales répertoriées avec schéma conforme.`
           : 'Schéma de réponse GeoJSON non conforme aux spécifications Téléray ASNR.',
         details: {
-          stations_received: json.features.length,
+          stations_received: json.features?.length || 0,
           sample_station: firstFeature ? {
             irsnId: firstFeature.properties.irsnId,
             publicName: firstFeature.properties.publicName,
@@ -166,16 +176,20 @@ export class TelerayConnector {
       return report;
     } catch (err: any) {
       const latency = Date.now() - startTime;
+      const isAbort = err?.name === 'AbortError';
       const report: TelerayAccessValidationReport = {
         endpoint_url: endpoint,
         tested_at: new Date().toISOString(),
-        status: 'UNVERIFIED',
-        status_label: 'NON VÉRIFIÉ',
+        status: 'OUTAGE',
+        status_label: 'PANNE DÉTECTÉE',
         latency_ms: latency,
         schema_valid: false,
         unit: 'nSv/h',
         authority: 'ASNR / IRSN',
-        notes: `Échec d'interrogation de l'API Téléray (${err?.name || 'Erreur'} : ${err?.message || 'Délai d attente dépassé'}). État : NON VÉRIFIÉ.`,
+        data_nature: 'UNAVAILABLE',
+        notes: isAbort
+          ? `Délai d'attente dépassé (> ${timeoutMs}ms) lors de l'interrogation de l'infrastructure Téléray ASNR.`
+          : `Échec d'interrogation de l'API Téléray (${err?.message || 'Indisponible'}). Aucune mesure fictive n'est synthétisée.`,
       };
       this.lastValidationReport = report;
       return report;
@@ -190,20 +204,27 @@ export class TelerayConnector {
   }
 
   /**
-   * Récupère les balises officielles Téléray depuis l'API ASNR
+   * Récupère les balises officielles Téléray depuis l'API ASNR.
+   * Règle stricte : Si l'API échoue, on retourne UNIQUEMENT le cache authentifié précédent
+   * avec indication explicite from_cache: true, OU une liste vide avec status UNAVAILABLE.
+   * Aucune fausse mesure n'est injectée.
    */
   public static async fetchOfficialStations(limit: number = 500): Promise<{
     stations: TelerayStationFeature[];
-    source_status: 'VERIFIED' | 'UNVERIFIED';
+    source_status: 'VERIFIED' | 'UNVERIFIED' | 'OUTAGE';
     from_cache: boolean;
+    cache_timestamp: string | null;
+    data_nature: DataNature;
   }> {
     const now = Date.now();
-    // Cache interne 15 minutes pour ne pas surcharger l'API institutionnelle
+    // Cache interne 15 minutes pour ne pas saturer l'API institutionnelle
     if (this.cachedStations.length > 0 && now - this.lastFetchTimestamp < 15 * 60 * 1000) {
       return {
         stations: this.cachedStations,
         source_status: this.lastValidationReport?.status || 'VERIFIED',
         from_cache: true,
+        cache_timestamp: this.cacheTimestamp,
+        data_nature: 'CACHED',
       };
     }
 
@@ -225,6 +246,7 @@ export class TelerayConnector {
         if (json && Array.isArray(json.features) && json.features.length > 0) {
           this.cachedStations = json.features;
           this.lastFetchTimestamp = now;
+          this.cacheTimestamp = new Date(now).toISOString();
           this.lastValidationReport = {
             endpoint_url: this.OFFICIAL_STATIONS_ENDPOINT,
             tested_at: new Date().toISOString(),
@@ -236,23 +258,55 @@ export class TelerayConnector {
             schema_valid: true,
             unit: 'nSv/h',
             authority: 'ASNR / IRSN',
-            notes: `Réseau officiel Téléray synchronisé avec succès (${json.features.length} balises).`,
+            data_nature: 'REAL',
+            notes: `Réseau officiel Téléray synchronisé avec succès (${json.features.length} balises réelles).`,
           };
           return {
             stations: json.features,
             source_status: 'VERIFIED',
             from_cache: false,
+            cache_timestamp: null,
+            data_nature: 'REAL',
           };
         }
       }
     } catch (err) {
-      console.warn('[TelerayConnector] Direct fetch failed, maintaining existing cache or reporting UNVERIFIED:', err);
+      console.warn('[TelerayConnector] Direct fetch failed, maintaining existing cache or reporting OUTAGE:', err);
     }
 
+    // En cas de panne de l'API :
+    // Si nous avions un cache réel précédent, on le sert avec statut 'CACHED'
+    if (this.cachedStations.length > 0) {
+      return {
+        stations: this.cachedStations,
+        source_status: 'OUTAGE',
+        from_cache: true,
+        cache_timestamp: this.cacheTimestamp,
+        data_nature: 'CACHED',
+      };
+    }
+
+    // Aucun cache préalable : indisponible, aucune mesure simulée n'est injectée
     return {
-      stations: this.cachedStations,
-      source_status: 'UNVERIFIED',
-      from_cache: true,
+      stations: [],
+      source_status: 'OUTAGE',
+      from_cache: false,
+      cache_timestamp: null,
+      data_nature: 'UNAVAILABLE',
     };
+  }
+
+  /**
+   * Séparateur strict de nature de donnée
+   */
+  public static classifyDataNature(params: {
+    isDirectFeed: boolean;
+    isFromCache: boolean;
+    isSimulatedDemo: boolean;
+  }): DataNature {
+    if (params.isSimulatedDemo) return 'SIMULATED';
+    if (!params.isDirectFeed && !params.isFromCache) return 'UNAVAILABLE';
+    if (params.isFromCache) return 'CACHED';
+    return 'REAL';
   }
 }

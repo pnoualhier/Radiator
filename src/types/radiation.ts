@@ -159,6 +159,11 @@ export interface SourceHealth {
   status: 'OK' | 'DEGRADED' | 'DISABLED' | 'ERROR';
   status_emoji?: string;
   status_label?: string;
+  connection_state?: 'CONNECTED' | 'CATALOG_VERIFIED' | 'DEFERRED_PUBLICATION' | 'RESTRICTED_ACCESS' | 'ERROR';
+  imported_stations_count?: number;
+  imported_measurements_count?: number;
+  measurements_feed_status?: string;
+  integration_test_passed?: boolean;
   last_sync_time?: string;
   last_sync_at?: string;
   last_sync_status?: string;

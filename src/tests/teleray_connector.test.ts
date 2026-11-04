@@ -62,4 +62,35 @@ describe('TelerayConnector Specification & Validation (P0)', () => {
     assert.equal(simulatedRecord.is_simulated, true, 'Simulated values must have is_simulated: true');
     assert.equal(simulatedRecord.data_nature, 'DEMO', 'Simulated values must be tagged DEMO');
   });
+
+  test('TelerayConnector.classifyDataNature strictly separates REAL, CACHED, SIMULATED, UNAVAILABLE', () => {
+    // 1. Direct stream -> REAL
+    assert.equal(
+      TelerayConnector.classifyDataNature({ isDirectFeed: true, isFromCache: false, isSimulatedDemo: false }),
+      'REAL'
+    );
+    // 2. Cache stream -> CACHED
+    assert.equal(
+      TelerayConnector.classifyDataNature({ isDirectFeed: false, isFromCache: true, isSimulatedDemo: false }),
+      'CACHED'
+    );
+    // 3. Demo / test -> SIMULATED
+    assert.equal(
+      TelerayConnector.classifyDataNature({ isDirectFeed: false, isFromCache: false, isSimulatedDemo: true }),
+      'SIMULATED'
+    );
+    // 4. Outage without cache -> UNAVAILABLE (NEVER fake measurement!)
+    assert.equal(
+      TelerayConnector.classifyDataNature({ isDirectFeed: false, isFromCache: false, isSimulatedDemo: false }),
+      'UNAVAILABLE'
+    );
+  });
+
+  test('Outage behavior: An outage never yields a measurement looking official', async () => {
+    // Calling with an unreachable timeout forces failure/outage
+    const report = await TelerayConnector.validateAccess(1); // 1ms will abort
+    assert.ok(['UNVERIFIED', 'OUTAGE'].includes(report.status));
+    assert.equal(report.data_nature, 'UNAVAILABLE', 'Data nature on failed query must be UNAVAILABLE');
+    assert.equal(report.schema_valid, false);
+  });
 });

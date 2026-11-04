@@ -13,6 +13,7 @@ import {
 import type { Station, LatestMeasurement, Measurement } from '../types/radiation';
 import { DataNatureBadge } from './DataNatureBadge';
 import { safeFormatTime, safeFormatDate } from '../utils/dateUtils';
+import { getStaleThresholdHours } from '../utils/quality';
 import { HelpTooltip } from './HelpTooltip';
 
 interface TransparentMeasurementSheetProps {
@@ -73,7 +74,12 @@ export const TransparentMeasurementSheet: React.FC<TransparentMeasurementSheetPr
   // Status (LIVE, CACHED, DEMO, UNAVAILABLE)
   const dataNature = (meas as any)?.data_nature || station.data_nature || (station.is_simulated ? 'DEMO' : 'LIVE');
   const isSimulated = (meas as any)?.is_simulated || station.is_simulated || dataNature === 'DEMO';
-  const validationStatus = (meas as any)?.validation_status || station.validation_status || 'AUTO_VALIDATED';
+  // Staleness evaluation (Requirement 3: Distinguish measured_at from sync time and flag 'mesure ancienne')
+  const staleThreshold = getStaleThresholdHours(station.source_code, measurementType);
+  const measuredTimestamp = measuredTime ? new Date(measuredTime).getTime() : 0;
+  const ageMs = measuredTimestamp > 0 ? Math.max(0, Date.now() - measuredTimestamp) : 0;
+  const ageHours = ageMs / 3600000;
+  const isStale = Boolean((meas as any)?.is_stale || (meas as any)?.quality_status === 'STALE' || (measuredTimestamp > 0 && ageHours >= staleThreshold));
 
   return (
     <div className={`rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl space-y-4 ${className}`}>
@@ -113,7 +119,27 @@ export const TransparentMeasurementSheet: React.FC<TransparentMeasurementSheetPr
         </div>
       </div>
 
-      {/* Main 6-parameter Grid (Feature 2 user requirement) */}
+      {/* Staleness Banner: 'Mesure ancienne' warning (Requirement 3) */}
+      {isStale && (
+        <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/50 text-amber-200 text-xs font-mono shadow-md animate-in fade-in">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/40 uppercase">
+                Mesure ancienne
+              </span>
+              <span className="font-bold text-white">Télémesure non rafraîchie</span>
+            </div>
+            <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+              <strong>Attention métrologique :</strong> Ne confondez pas une synchronisation récente avec une mesure récente.
+              L'application a bien vérifié la liaison serveur, mais le capteur physique n'a pas transmis de nouveau relevé récent.
+              La donnée affichée est conservée pour information historique.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Main 6-parameter Grid (Feature 2 & 3 user requirements) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs font-mono">
         {/* 1. Source */}
         <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
@@ -166,42 +192,47 @@ export const TransparentMeasurementSheet: React.FC<TransparentMeasurementSheetPr
             <span>4. Heure de mesure physique</span>
             <Radio className="w-3 h-3 text-amber-400" />
           </span>
-          <div className="font-bold text-white">
-            {safeFormatTime(measuredTime, { hour: '2-digit', minute: '2-digit', second: '2-digit' }, 'Horodatage capteur')}
+          <div className="font-bold text-white flex items-center gap-1.5">
+            <span>{safeFormatTime(measuredTime, { hour: '2-digit', minute: '2-digit', second: '2-digit' }, 'Horodatage capteur')}</span>
+            {isStale && (
+              <span className="text-[10px] font-bold text-amber-400 bg-amber-500/20 px-1.5 py-0.2 rounded border border-amber-500/30">
+                Périmée
+              </span>
+            )}
           </div>
           <div className="text-[10px] text-slate-400 font-sans">
-            Date : {measuredDate}
+            Date relevé : {measuredDate}
           </div>
         </div>
 
-        {/* 5. Heure de récupération (Serveur / Ingestion) */}
+        {/* 5. Heure de réception (Serveur / Ingestion) */}
         <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
           <span className="text-[10px] uppercase tracking-wider text-slate-500 block font-sans flex items-center justify-between">
-            <span>5. Heure de récupération</span>
+            <span>5. Heure de réception (Serveur)</span>
             <Server className="w-3 h-3 text-sky-400" />
           </span>
           <div className="font-bold text-sky-300">
             {safeFormatTime(fetchedTime, { hour: '2-digit', minute: '2-digit', second: '2-digit' }, 'Ingestion serveur')}
           </div>
           <div className="text-[10px] text-slate-400 font-sans">
-            Enregistrement pipeline sécurisé
+            Horodatage d'arrivée sur le serveur central
           </div>
         </div>
 
-        {/* 6. Statut de la donnée (Réel, Mis en cache ou Simulé) */}
+        {/* 6. Heure de mise en cache locale */}
         <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-1">
           <span className="text-[10px] uppercase tracking-wider text-slate-500 block font-sans flex items-center justify-between">
-            <span>6. Statut certifié de la donnée</span>
+            <span>6. Heure de mise en cache</span>
             <Database className="w-3 h-3 text-emerald-400" />
           </span>
           <div className="font-bold text-white flex items-center gap-1.5">
-            {dataNature === 'LIVE' && <span className="text-emerald-400">🟢 Réel (LIVE en direct)</span>}
+            {dataNature === 'LIVE' && <span className="text-emerald-400">🟢 Réel (En direct)</span>}
             {dataNature === 'CACHED' && <span className="text-amber-300">🟡 Mis en cache local</span>}
             {dataNature === 'DEMO' && <span className="text-purple-400">🟣 Simulé (Démonstration)</span>}
-            {dataNature === 'UNAVAILABLE' && <span className="text-slate-400">⚪ Indisponible / En attente</span>}
+            {dataNature === 'UNAVAILABLE' && <span className="text-slate-400">⚪ Indisponible</span>}
           </div>
           <div className="text-[10px] text-slate-400 font-sans">
-            {cachedTime ? `Mis en cache à ${safeFormatTime(cachedTime)}` : 'Vérification métrologique OK'}
+            {cachedTime ? `Enregistré localement à ${safeFormatTime(cachedTime)}` : 'Non mis en cache persistant'}
           </div>
         </div>
       </div>

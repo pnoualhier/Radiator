@@ -1,9 +1,11 @@
 """Téléray / ASNR-IRSN Connector.
 
 Handles official French institutional radiological network:
-- Over 400 fixed gamma ambient probes in metropolitan France & Corsica.
-- Unit: typically nSv/h or µSv/h.
-- Clean JSON / REST endpoints with test fixture fallback when remote is offline.
+- Over 450 fixed gamma ambient probes in metropolitan France & Corsica.
+- Authority: ASNR (Autorité de Sûreté Nucléaire et Radioprotection).
+- Official endpoint: https://teleray.asnr.fr/api/stations (GeoJSON FeatureCollection).
+- Unit: nSv/h.
+- Strict data integrity rule: No simulated fallback data is ever produced as official.
 """
 
 import json
@@ -418,55 +420,8 @@ class TelerayConnector(RadiationSourceConnector):
                     if results:
                         return results
         except Exception as e:
-            logger.debug("Remote fetch_measurements fallback to benchmark: %s", str(e))
-
-        # In production, do NOT generate simulated data to prevent misleading radiological reporting
-        from app.config import settings
-        if settings.APP_ENV == "production":
-            logger.warning(
-                "Production mode active: Téléray live API unreachable, suppressing simulated DEMO data fallback."
-            )
+            logger.warning("Remote fetch_measurements failed on Téléray API: %s. Returning empty measurements list (no synthetic fallback allowed).", str(e))
             return []
 
-        # Generate realistic measurements for the benchmark stations
-        # Tagged strictly as DEMO / is_simulated=True
-        for b in TELERAY_BENCHMARK_STATIONS:
-            if station_ids and b["external_id"] not in station_ids:
-                continue
-
-            base = b["nominal_nsvh"]
-            # Realistic physical environmental fluctuation (+/- 3%)
-            fluctuation = (hash(f"{b['external_id']}-{now.hour}") % 10 - 5) * 0.6
-            meas_val = round(base + fluctuation, 1)
-
-            # Measurements updated within the last 15-45 minutes
-            offset_minutes = (hash(b["external_id"]) % 30) + 5
-            meas_time = now - timedelta(minutes=offset_minutes)
-
-            norm_val, norm_u = normalize_dose_rate(meas_val, "nSv/h")
-            quality_status, _ = assess_measurement_quality(norm_val, meas_time, "nSv/h", is_official=True, current_time=now)
-
-            results.append(
-                NormalizedMeasurementRecord(
-                    station_external_id=b["external_id"],
-                    external_id=f"M-{b['external_id']}-{int(meas_time.timestamp())}",
-                    measured_at=meas_time,
-                    raw_value=meas_val,
-                    raw_unit="nSv/h",
-                    value=norm_val or meas_val,
-                    unit="nSv/h",
-                    measurement_type="AMBIENT_GAMMA_DOSE_RATE",
-                    quality_status=quality_status,
-                    validation_status="AUTO_VALIDATED",
-                    data_nature="DEMO",
-                    is_simulated=True,
-                    metadata_json=json.dumps({
-                        "source": "Téléray",
-                        "data_nature": "DEMO",
-                        "notice": "Valeur simulée à titre de démonstration géologique de référence",
-                        "sensor_type": "Geiger-Müller / Proportional counter"
-                    }),
-                )
-            )
-
-        return results
+        # If remote returned empty or failed, never generate synthetic measurements for official stations
+        return []

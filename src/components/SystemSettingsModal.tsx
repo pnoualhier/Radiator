@@ -41,8 +41,10 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({
     updateAvailable,
     statusMessage,
     autoUpdateEnabled,
+    platformInfo,
     toggleAutoUpdate,
     checkForUpdate,
+    controlledUpdate,
     forceUpdate,
   } = useAppUpdate();
 
@@ -66,7 +68,7 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({
                   title="Centre de Configuration Système"
                   position="bottom"
                   align="start"
-                  content="Paramétrez les fonctionnalités globales de l'application : gestion des versions logicielles, système de mises à jour silencieuses en tâche de fond, bascule de thème clair/sombre et installation sur votre bureau ou mobile."
+                  content="Paramétrez les fonctionnalités globales de l'application : gestion des versions logicielles, système de mises à jour opportunistes, bascule de thème clair/sombre et installation sur votre bureau ou mobile."
                 />
               </div>
               <p className="text-xs text-slate-400">Version, mises à jour & affichage</p>
@@ -131,17 +133,17 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({
             </div>
           </div>
 
-          {/* SECTION 2: Update Management */}
+          {/* SECTION 2: Update Management & Real Platform Behavior (Requirement 5) */}
           <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-3">
             <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
               <div className="flex items-center gap-2 text-white font-bold text-sm">
                 <RefreshCw className="w-4 h-4 text-sky-400" />
-                <span>Gestion des Mises à Jour</span>
+                <span>Gestion des Mises à Jour & Comportement PWA</span>
                 <HelpTooltip
                   title="Gestionnaire des Mises à Jour & Cache"
                   position="bottom"
                   align="start"
-                  content="Contrôle les mises à jour automatiques en tâche de fond (toutes les 15 min via Service Worker). Le bouton « Forcer la mise à jour » vide le cache HTTP/IndexedDB et recharge les bundles JS les plus récents."
+                  content="Gestion réaliste du cycle de vie PWA. Les navigateurs (notamment Safari iOS et Chrome Android) suspendant les pages en arrière-plan, les contrôles s'exécutent opportunément au réveil et au premier plan. La mise à jour contrôlée préserve l'intégralité de vos données hors ligne."
                 />
               </div>
               <span className="text-[11px] text-slate-400">
@@ -149,9 +151,19 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({
               </span>
             </div>
 
-            <p className="text-slate-300 text-[11px] leading-relaxed">
-              Le système compare régulièrement les signatures logicielles et télécharge automatiquement les nouvelles versions sans interrompre la surveillance radiologique.
-            </p>
+            {/* Platform Constraints Reality Panel */}
+            <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1.5 text-[11px]">
+              <div className="flex items-center justify-between text-slate-300 font-bold">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-sky-400" />
+                  {platformInfo.platformName}
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal">Contraintes de veille</span>
+              </div>
+              <p className="text-slate-400 leading-relaxed font-sans text-[11px]">
+                {platformInfo.suspensionNotice}
+              </p>
+            </div>
 
             {/* Status message */}
             <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
@@ -164,10 +176,10 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({
               <div>
                 <div className="font-bold text-white text-xs flex items-center gap-1.5">
                   <Zap className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Mises à jour automatiques en arrière-plan</span>
+                  <span>Vérification opportuniste au premier plan</span>
                 </div>
                 <div className="text-[10px] text-slate-400 mt-0.5">
-                  Vérification toutes les 15 minutes et installation transparente
+                  Contrôle au réveil de l'application et lors du retour de connexion
                 </div>
               </div>
 
@@ -188,25 +200,31 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({
               </button>
             </div>
 
-            {/* Update Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              <button
-                onClick={() => checkForUpdate()}
-                disabled={isChecking}
-                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold transition disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isChecking ? 'animate-spin text-amber-400' : ''}`} />
-                <span>Vérifier les mises à jour</span>
-              </button>
+            {/* Controlled Update Action Buttons */}
+            <div className="space-y-2 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={() => checkForUpdate()}
+                  disabled={isChecking}
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold transition disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isChecking ? 'animate-spin text-amber-400' : ''}`} />
+                  <span>Vérifier maintenant</span>
+                </button>
 
-              <button
-                onClick={forceUpdate}
-                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold transition"
-                title="Purge tous les caches du navigateur et recharge la version la plus récente"
-              >
-                <DownloadCloud className="w-3.5 h-3.5 text-amber-400" />
-                <span>Forcer la mise à jour</span>
-              </button>
+                <button
+                  onClick={controlledUpdate}
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold transition"
+                  title="Applique la nouvelle version tout en conservant strictement votre base IndexedDB hors ligne et vos favoris"
+                >
+                  <DownloadCloud className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Mise à jour contrôlée</span>
+                </button>
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/30 text-[10px] text-emerald-300 font-sans flex items-center justify-between">
+                <span>🛡️ Garantie : La mise à jour contrôlée préserve l'intégralité de vos balises et données IndexedDB.</span>
+              </div>
             </div>
           </div>
 

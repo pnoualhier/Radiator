@@ -118,7 +118,7 @@ export const AlertsPage: React.FC = () => {
           <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Server className="w-4 h-4 text-emerald-400" />
-              <span className="text-slate-400">Connecteur officiel :</span>
+              <span className="text-slate-400">Importateur officiel :</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-emerald-400 flex items-center gap-1.5">
@@ -126,10 +126,10 @@ export const AlertsPage: React.FC = () => {
                 {connectorStatus?.status || 'OPÉRATIONNEL'}
               </span>
               <HelpTooltip
-                title="Supervision du flux officiel d'alertes"
+                title="Supervision de l'importateur institutionnel"
                 position="bottom"
                 align="end"
-                content="Liaison directe avec les registres d'incidents de l'ASNR et de l'IRSN. Vérifie l'authenticité numérique des communiqués et la conformité à l'échelle internationale INES."
+                content="Liaison directe avec les registres d'incidents de l'ASNR, de l'IRSN, du système ECURIE et des préfectures. Interroge les flux réels et vérifie la signature numérique anti-altération."
               />
             </div>
           </div>
@@ -154,6 +154,57 @@ export const AlertsPage: React.FC = () => {
             </span>
           </div>
         </div>
+
+        {/* Mandatory Legal & Safety Disclaimer (Requirement 4) */}
+        <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-950/40 border border-amber-600/50 text-amber-200 text-xs font-mono">
+          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-1 font-sans">
+            <div className="font-bold font-mono text-amber-300 uppercase tracking-wide flex items-center gap-2">
+              <span>Avertissement formel de sécurité civile</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-200 font-normal">
+                Règle P1
+              </span>
+            </div>
+            <p className="text-slate-200 leading-relaxed text-xs">
+              <strong>L'absence d'alerte dans Radiator ne doit jamais être interprétée comme la preuve qu'aucune alerte officielle n'existe.</strong>
+              {' '}En situation d'urgence ou d'événement radiologique majeur, référez-vous systématiquement et exclusivement aux canaux officiels de l'État : alertes de la Préfecture, notifications FR-Alert sur mobile, sirènes SAIP et communiqués de l'Autorité de Sûreté Nucléaire et de Radioprotection (ASNR).
+            </p>
+          </div>
+        </div>
+
+        {/* Importer Sync Audit Report (if triggered) */}
+        {syncReport && (
+          <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-500/30 text-xs font-mono space-y-2 animate-in fade-in">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" />
+                Interrogation réussie des {syncReport.sources_polled} sources officielles
+              </span>
+              <span className="text-slate-400 text-[11px]">
+                Latence : {syncReport.latency_ms} ms
+              </span>
+            </div>
+            {syncReport.sources_results && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                {syncReport.sources_results.map((src: any) => (
+                  <div key={src.code} className="p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-slate-300">{src.code}</span>
+                    <span className="text-slate-400 truncate max-w-[120px]">{src.status} ({src.latency_ms}ms)</span>
+                    <a
+                      href={src.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-400 hover:text-amber-300 shrink-0 ml-1"
+                      title={src.url}
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 🏛️ Crucial Methodology & Guarantee Card: Une alerte officielle ≠ une valeur élevée Radiator */}

@@ -256,9 +256,9 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
           </div>
 
           <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-            <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              Toutes les sources opérationnelles (6/6)
+            <span className="flex items-center gap-1.5 text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>2 flux en direct • 4 réseaux institutionnels répertoriés</span>
             </span>
           </div>
         </div>
@@ -269,16 +269,19 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 uppercase text-[11px]">
                 <th className="pb-3 font-semibold">Source</th>
-                <th className="pb-3 font-semibold text-center">État</th>
+                <th className="pb-3 font-semibold text-center">Statut réel</th>
                 <th className="pb-3 font-semibold">Dernière synchro</th>
                 <th className="pb-3 font-semibold text-right">Stations</th>
                 <th className="pb-3 font-semibold text-right hidden sm:table-cell">Hors ligne</th>
-                <th className="pb-3 font-semibold text-right hidden md:table-cell">Mesures reçues 24h</th>
+                <th className="pb-3 font-semibold text-right hidden md:table-cell">Mesures importées</th>
                 <th className="pb-3 font-semibold hidden lg:table-cell">Protocole & Contrôle</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {sourcesHealth.map(src => {
+                const connState = src.connection_state || (src.code === 'OPENRADIATION' || src.code === 'SAFECAST' ? 'CONNECTED' : src.code === 'TELERAY' ? 'CATALOG_ONLY' : 'DISCONNECTED');
+                const isActuallyConnected = src.is_connected ?? (src.imported_measurements_count > 0 && connState === 'CONNECTED');
+
                 return (
                   <tr key={src.code} className="hover:bg-slate-800/40 transition">
                     {/* Source Name */}
@@ -291,29 +294,45 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
                       </div>
                     </td>
 
-                    {/* État (🟢) */}
+                    {/* État réel (Règle stricte P0 : 0 mesure => NON affiché comme connecté) */}
                     <td className="py-3.5 px-2 text-center">
-                      <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-800 text-emerald-300 font-bold text-xs">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>{src.status_emoji || '🟢'}</span>
-                        <span className="hidden sm:inline font-sans text-[11px] font-semibold">Opérationnel</span>
-                      </div>
+                      {isActuallyConnected ? (
+                        <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-800 text-emerald-300 font-bold text-xs">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>🟢 Connecté en direct</span>
+                        </div>
+                      ) : src.code === 'TELERAY' || connState === 'CATALOG_ONLY' ? (
+                        <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-950/80 border border-sky-800 text-sky-300 font-bold text-xs">
+                          <span className="w-2 h-2 rounded-full bg-sky-400" />
+                          <span>🔵 Répertoire seul (0 mesure directe)</span>
+                        </div>
+                      ) : src.code === 'EURDEP' || connState === 'RESTRICTED_ACCESS' ? (
+                        <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-300 text-xs font-semibold">
+                          <span className="w-2 h-2 rounded-full bg-slate-400" />
+                          <span>⚪ Accès restreint (Non connecté)</span>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-950/80 border border-purple-800 text-purple-300 font-semibold text-xs">
+                          <span className="w-2 h-2 rounded-full bg-purple-400" />
+                          <span>🟣 Non connecté (0 mesure importée)</span>
+                        </div>
+                      )}
                     </td>
 
-                    {/* Dernière synchro */}
+                    {/* Dernière synchro réussie */}
                     <td className="py-3.5 px-2">
                       <div className="font-bold text-slate-200 text-sm">
                         {src.last_sync_time || '10:42'}
                       </div>
                       <div className="text-[10px] text-slate-400">
-                        {src.sync_frequency || '10 minutes'}
+                        {src.sync_frequency || (isActuallyConnected ? 'En direct' : 'Non synchronisé')}
                       </div>
                     </td>
 
                     {/* Stations */}
                     <td className="py-3.5 px-2 text-right">
                       <span className="font-bold text-white">
-                        {src.total_stations || src.records_count || '—'}
+                        {src.imported_stations_count ?? (src.total_stations || src.records_count || '—')}
                       </span>
                     </td>
 
@@ -324,19 +343,25 @@ export const NetworkHealthPage: React.FC<NetworkHealthPageProps> = ({
                       </span>
                     </td>
 
-                    {/* Mesures reçues 24h */}
+                    {/* Mesures importées réelles */}
                     <td className="py-3.5 px-2 text-right hidden md:table-cell">
-                      <span className="font-bold text-sky-400">
-                        {src.today_records ? src.today_records.toLocaleString('fr-FR') : '—'}
-                      </span>
+                      {src.imported_measurements_count && src.imported_measurements_count > 0 ? (
+                        <span className="font-bold text-emerald-400">
+                          {src.imported_measurements_count.toLocaleString('fr-FR')}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 italic">
+                          0 (Flux non ouvert)
+                        </span>
+                      )}
                     </td>
 
                     {/* Protocole & Contrôle */}
                     <td className="py-3.5 pl-3 hidden lg:table-cell">
-                      <div className="text-[11px] text-slate-300">
+                      <div className="text-[11px] text-slate-300 truncate max-w-xs" title={src.protocol}>
                         {src.protocol}
                       </div>
-                      <div className="text-[10px] text-emerald-400 font-sans">
+                      <div className="text-[10px] text-emerald-400 font-sans truncate max-w-xs" title={src.data_integrity}>
                         ✓ {src.data_integrity}
                       </div>
                     </td>

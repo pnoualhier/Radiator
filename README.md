@@ -38,12 +38,12 @@ Un tiroir de navigation ergonomique regroupe l'ensemble des modules applicatifs 
 - **📖 Pédagogie & Métrologie :** Méthodologie scientifique, visite guidée, mentions légales.
 - **⚙️ Système & Paramètres :** Paramètres système, thème clair/sombre, installation PWA.
 
-### ⚙️ 2. Paramètres Système & Mises à Jour Automatiques en Arrière-Plan
+### ⚙️ 2. Paramètres Système & Mises à Jour Contrôlées PWA
 - **Traçabilité logicielle :** Affichage de la date de sortie (`12 Octobre 2026`) et de la version logicielle (`v1.4.2`).
-- **Date de dernière vérification :** Horodatage précis du dernier contrôle serveur.
+- **Date de dernière vérification :** Horodatage précis du dernier contrôle serveur avec distinction entre heure de synchro et heure de mesure.
 - **Bouton « Vérifier les mises à jour » :** Contrôle instantané de la signature du Service Worker et de l'API.
-- **Bouton « Forcer la mise à jour » :** Purge complète des caches de stockage (`CacheStorage`), désenregistrement des anciens Service Workers et rechargement propre.
-- **Système automatique en arrière-plan :** Tâche périodique (toutes les 15 minutes) qui vérifie en tâche de fond la disponibilité de nouveaux correctifs et les applique de manière transparente.
+- **Mise à jour contrôlée (Recommandé) :** Applique les nouveaux composants et bundles Web en **préservant scrupuleusement l'intégralité de vos données hors ligne** (IndexedDB, balises favorites et séries temporelles archivées).
+- **Comportement réel des navigateurs (Anti-promesse irréaliste) :** Les navigateurs modernes (notamment Safari sous iOS et Chrome sous Android avec économiseur de batterie) suspendant l'exécution des pages en arrière-plan, les contrôles s'exécutent de façon opportuniste au réveil de l'application (`visibilitychange`), lors du retour au premier plan ou lors du rétablissement de la connexion (`online`), sans prétendre à une exécution garantie en veille profonde.
 
 ### ☀️ 3. Mode Clair & Mode Sombre Haute Lisibilité
 - Bascule fluide entre le **thème sombre tactique** (confort visuel de nuit) et le **thème clair à fort contraste**.
@@ -79,16 +79,20 @@ Arborescence chronologique interactive mois par mois (`Jan`, `Fév`, `Mars`...) 
 
 ---
 
-## 🏛️ Sources & Réseaux de Surveillance Connectés
+## 🏛️ Sources & Réseaux de Surveillance Répertoriés & Connectés
 
-| Réseau | Organisme producteur | Type | Nature des télémesures |
+Afin de respecter la plus stricte transparence métrologique, l'application distingue formellement les réseaux transmettant un **flux direct ouvert continu de télémesures** de ceux répertoriés au cadastre ou sous protocole institutionnel :
+
+| Réseau | Organisme producteur | Statut réel d'intégration | Nature des données |
 | :--- | :--- | :--- | :--- |
-| **Téléray** | ASNR / IRSN (État Français) | Institutionnel | 457 sondes fixes continues ($H^*(10)$ en nSv/h) |
-| **HydroTéléray** | IRSN | Institutionnel | Eaux fluviales en aval des CNPE (Tritium en Bq/L) |
-| **OPERA-Air** | IRSN | Institutionnel | Aérosols atmosphériques sur filtres géants ($\mu\text{Bq/m}^3$) |
-| **EURDEP** | Commission Européenne (DG JRC) | Institutionnel | Surveillance transfrontalière européenne continue |
-| **OpenRadiation** | Consortium citoyen (IRSN, Sorbonne, ANCCLI) | Citoyen | Capteurs portables géolocalisés en direct |
-| **Safecast** | Réseau citoyen international ouvert | Citoyen | Capteurs bGeigie mobiles et fixes |
+| **OpenRadiation** | Consortium citoyen (IRSN, Sorbonne, ANCCLI, FabLabs) | **🟢 Connecté en direct** (Flux live temps réel ouvert) | Capteurs mobiles et fixes géolocalisés (débit de dose en nSv/h) |
+| **Safecast** | Réseau citoyen international ouvert | **🟢 Connecté en direct** (API ouverte temps réel) | Capteurs citoyens bGeigie mobiles et fixes |
+| **Téléray** | ASNR / IRSN (Autorité de Sûreté Nucléaire et Radioprotection) | **🔵 Répertoire officiel certifié** (Cadastre des 479 balises ASNR, pas de flux public temps réel sans clé) | 479 balises fixes nationales ($H^*(10)$ en nSv/h) |
+| **HydroTéléray** | ASNR / IRSN | **🟣 Non connecté** (Cadastre et fiches de surveillance fluviale, 0 mesure directe importée) | Bassins fluviaux en aval des CNPE (Tritium en Bq/L) |
+| **OPERA-Air** | ASNR / IRSN | **🟣 Non connecté** (Fiches sentinelles et baseline environnementale, 0 mesure directe importée) | Aérosols atmosphériques sur filtres géants ($\mu\text{Bq/m}^3$) |
+| **EURDEP** | Commission Européenne (DG JRC) | **⚪ Accès restreint** (Protocole d'échange interétatique UE, non connecté en flux direct) | Surveillance transfrontalière européenne continue |
+
+> **Règle stricte de traçabilité :** Un connecteur écrit mais qui ne récupère aucune mesure directe ne peut en aucun cas être affiché comme connecté. Seuls OpenRadiation et Safecast fournissent un flux direct de télémesures en direct continu sans clé d'accès restreinte. Téléray est audité et certifié en tant que répertoire officiel d'État (479 balises vérifiées auprès du domaine officiel `teleray.asnr.fr`).
 
 ---
 

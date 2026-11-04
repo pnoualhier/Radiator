@@ -98,4 +98,30 @@ describe('OfficialAlertConnector Specification & Lifecycle (P1)', () => {
     assert.equal(res.action, 'REJECTED');
     assert.ok(res.error?.includes('Rejet éthique'));
   });
+
+  test('Real Importer sync queries official feeds and returns live source connectivity report', async () => {
+    const report = await OfficialAlertConnector.sync();
+    assert.equal(report.status, 'SUCCESS');
+    assert.equal(report.sources_polled, 4);
+    assert.ok(Array.isArray(report.sources_results), 'Must return sources_results array');
+    assert.equal(report.sources_results.length, 4);
+    assert.ok(report.disclaimer.includes("L'absence d'alerte enregistrée dans Radiator ne constitue en aucun cas la preuve qu'aucune alerte officielle n'existe"));
+
+    // Check each source result
+    for (const srcRes of report.sources_results) {
+      assert.ok(srcRes.url.startsWith('https://'));
+      assert.ok(typeof srcRes.latency_ms === 'number');
+      assert.ok(['ONLINE', 'DEGRADED', 'TIMEOUT_OR_UNREACHABLE'].includes(srcRes.status));
+    }
+  });
+
+  test('Every imported alert provides a verifiable direct link to original official communication', () => {
+    const alerts = OfficialAlertConnector.getAlerts();
+    assert.ok(alerts.length > 0, 'Should have official alerts');
+    for (const a of alerts) {
+      assert.ok(a.official_url || a.source_url, `Alert ${a.external_id} must have official_url or source_url`);
+      const link = a.official_url || a.source_url;
+      assert.ok(link?.startsWith('https://'), `Link for ${a.external_id} must be https: ${link}`);
+    }
+  });
 });

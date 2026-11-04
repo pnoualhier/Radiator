@@ -520,6 +520,17 @@ export class ApiService {
     return null;
   }
 
+  // 9c. Network Integration Tests (Proof that each announced network works)
+  static async getIntegrationTests(): Promise<any> {
+    try {
+      const res = await fetch(`${BASE_URL}/health/integration-tests`);
+      if (res.ok) return await res.json();
+    } catch (err) {
+      console.warn('Failed to fetch integration tests:', err);
+    }
+    return null;
+  }
+
   // 10. Admin Sync
   static async triggerSync(sourceCode: string = 'TELERAY', adminKey: string): Promise<any> {
     const res = await fetch(`${BASE_URL}/admin/sync/${sourceCode.toLowerCase()}`, {
