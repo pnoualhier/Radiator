@@ -1,150 +1,164 @@
 <p align="center">
-  <img src="public/logo.svg" width="110" height="110" alt="Radiation France Logo" />
+  <img src="public/logo.svg" width="92" height="92" alt="Logo Radiation France" />
 </p>
 
-<h1 align="center">Radiation France — Surveillance Radiologique d'État & Citoyenne ☢️🇫🇷</h1>
+<h1 align="center">Radiation France — Surveillance radiologique</h1>
 
 <p align="center">
-  <strong>PWA de surveillance environnementale de la radioactivité en France métropolitaine et Corse</strong><br>
-  <em>Données certifiées Téléray (ASNR / IRSN), HydroTéléray, OPERA-Air, EURDEP, OpenRadiation et Safecast</em>
+  Une interface indépendante pour explorer les réseaux et les données de surveillance radiologique.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PWA-Installable-amber?style=flat-square&logo=pwa" alt="PWA" />
-  <img src="https://img.shields.io/badge/Offline-IndexedDB%2012k%2B-emerald?style=flat-square&logo=sqlite" alt="Offline" />
-  <img src="https://img.shields.io/badge/Donn%C3%A9es-T%C3%A9l%C3%A9ray%20ASNR-sky?style=flat-square" alt="Téléray" />
-  <img src="https://img.shields.io/badge/Th%C3%A8me-Sombre%20%7C%20Clair-purple?style=flat-square" alt="Themes" />
-  <img src="https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/React-19-cyan?style=flat-square&logo=react" alt="React" />
+  <a href="https://radiation-france-surveillance-radiologique.ai.studio/">Ouvrir l’application de référence</a>
+  ·
+  <a href="https://github.com/pnoualhier/Radiator">Voir le dépôt</a>
 </p>
 
----
+> **À lire avant d’interpréter les mesures.** Le dépôt contient des données de démonstration et des valeurs locales préchargées qui ne sont pas toutes reliées à un flux institutionnel. Le mode **DÉMO** affiche des données d’essai, pas des mesures réelles. Un catalogue de stations n’est pas une preuve de réception de mesures en direct. En cas d’urgence, suivez exclusivement les consignes des autorités.
 
-## 📸 Aperçu de l'Interface
+## Sommaire
+
+- [Présentation](#présentation)
+- [Aperçu de l’interface](#aperçu-de-linterface)
+- [Fonctionnalités et limites actuelles](#fonctionnalités-et-limites-actuelles)
+- [Sources de données et attribution](#sources-de-données-et-attribution)
+- [Expérience utilisateur et mode hors connexion](#expérience-utilisateur-et-mode-hors-connexion)
+- [Architecture technique](#architecture-technique)
+- [Installation et lancement](#installation-et-lancement)
+- [Licence et responsabilité](#licence-et-responsabilité)
+- [Contribuer](#contribuer)
+
+## Présentation
+
+**Radiation France** (dépôt **Radiator**) est une application web qui rassemble une interface cartographique, un annuaire de stations, des outils de comparaison et des pages d’information autour de la surveillance radiologique environnementale. Le projet vise à rendre les unités, les sources et les limites des données plus faciles à consulter.
+
+Le projet est indépendant et n’est ni affilié à l’ASNR ou à l’IRSN, ni approuvé par ces organismes. Il ne constitue pas un dispositif officiel de surveillance ou d’alerte et ne remplace pas leurs publications.
+
+## Aperçu de l’interface
+
+Les captures ci-dessous ont été réalisées dans le dépôt local, avec le mode **DÉMO** explicitement activé. Les valeurs d’essai ne sont pas des télémesures et ne doivent pas être reprises comme données radiologiques. Voir le [catalogue des captures et les écrans non publiés](docs/SCREENSHOTS_CATALOG.md).
 
 <p align="center">
-  <img src="public/app-preview.svg" width="100%" alt="Interface Radiation France - Tableau de bord et cartographie" style="border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);" />
+  <img src="docs/screenshots/overview/dashboard-demo.jpg" width="100%" alt="En-tête du tableau de bord Radiation France en mode démonstration, avec avertissements visibles indiquant que les valeurs sont des données d’essai." />
 </p>
 
----
+| Écran | Aperçu |
+|---|---|
+| Tableau de bord, thème clair | ![En-tête du tableau de bord en thème clair, mode démonstration](docs/screenshots/desktop/dashboard-light-demo.jpg) |
+| Comparaison de stations | ![Comparateur en mode démonstration ; les séries affichées sont des données d’essai](docs/screenshots/desktop/station-comparison-demo.jpg) |
+| Carte d’une station du jeu d’essai | ![Carte d’une station Téléray de démonstration, avec valeur simulée](docs/screenshots/desktop/station-card-demo.jpg) |
+| Paramètres système | ![Fenêtre des paramètres système de l’application](docs/screenshots/desktop/system-settings.jpg) |
+| Affichage mobile | ![En-tête mobile en mode démonstration, avec avertissements sur les données simulées](docs/screenshots/mobile/dashboard-demo.jpg) |
 
-## 🌟 Fonctionnalités Majeures
+Les images de carte, de sources, d’alertes et de chronologie n’ont pas été publiées : les écrans disponibles mêlent des valeurs locales ou préchargées à des présentations qui peuvent les faire passer pour des données réelles. Les raisons détaillées figurent dans le [catalogue](docs/SCREENSHOTS_CATALOG.md).
 
-### 🍔 1. Menu Hamburger Catégorisé
-Un tiroir de navigation ergonomique regroupe l'ensemble des modules applicatifs par domaines d'expertise :
-- **📡 Surveillance & Cartographie :** Accueil national, carte interactive, annuaire des 457 balises.
-- **📊 Analyses & Outils :** Comparateur multi-balises (jusqu'à 4 simultanées), types de mesure, timeline historique 2026.
-- **🚨 Réseau & Santé :** Alertes officielles de sécurité civile, santé de la télésurveillance, registre des sources.
-- **📖 Pédagogie & Métrologie :** Méthodologie scientifique, visite guidée, mentions légales.
-- **⚙️ Système & Paramètres :** Paramètres système, thème clair/sombre, installation PWA.
+## Fonctionnalités et limites actuelles
 
-### ⚙️ 2. Paramètres Système & Mises à Jour Contrôlées PWA
-- **Traçabilité logicielle :** Affichage de la date de sortie (`12 Octobre 2026`) et de la version logicielle (`v1.4.2`).
-- **Date de dernière vérification :** Horodatage précis du dernier contrôle serveur avec distinction entre heure de synchro et heure de mesure.
-- **Bouton « Vérifier les mises à jour » :** Contrôle instantané de la signature du Service Worker et de l'API.
-- **Mise à jour contrôlée (Recommandé) :** Applique les nouveaux composants et bundles Web en **préservant scrupuleusement l'intégralité de vos données hors ligne** (IndexedDB, balises favorites et séries temporelles archivées).
-- **Comportement réel des navigateurs (Anti-promesse irréaliste) :** Les navigateurs modernes (notamment Safari sous iOS et Chrome sous Android avec économiseur de batterie) suspendant l'exécution des pages en arrière-plan, les contrôles s'exécutent de façon opportuniste au réveil de l'application (`visibilitychange`), lors du retour au premier plan ou lors du rétablissement de la connexion (`online`), sans prétendre à une exécution garantie en veille profonde.
+L’interface comprend les modules suivants. Leur présence dans l’application ne garantit pas que les données affichées proviennent d’un flux réel ou soient vérifiées par leur producteur.
 
-### ☀️ 3. Mode Clair & Mode Sombre Haute Lisibilité
-- Bascule fluide entre le **thème sombre tactique** (confort visuel de nuit) et le **thème clair à fort contraste**.
-- Adaptation intelligente des fonds de carte OpenStreetMap (tuiles naturelles en mode clair, filtre nuit en mode sombre).
-- Persistance locale du choix utilisateur dans le navigateur (`localStorage`).
+| Module | Ce que contient l’interface | Limite importante |
+|---|---|---|
+| Tableau de bord | Accueil, station mise en avant, favoris, raccourcis et synthèse du réseau | Certains compteurs de santé du serveur sont des valeurs codées en dur. Ne pas les citer comme état opérationnel réel. |
+| Carte | Carte Leaflet, marqueurs, regroupement, filtres, modes d’affichage et couche d’interpolation | Les couches et valeurs préchargées ne sont pas toutes des mesures vérifiées. L’interpolation est une estimation, pas une mesure continue. |
+| Stations | Recherche par nom, commune, département ou réseau, filtres et favoris | Le catalogue contient des métadonnées et des jeux d’essai ; leur présence ne prouve pas une mesure en direct. |
+| Comparaison | Sélection de stations, courbes et périodes comparables | Les séries fournies en mode DÉMO sont synthétiques. |
+| Alertes | Registre et interface de consultation d’alertes | Le registre initial contient des entrées locales préchargées ; l’existence du module ne confirme pas une veille officielle en temps réel. |
+| Chronologie | Événements organisés par date et période | Les entrées sont intégrées au code et ne sont pas un flux historique officiel vérifié. |
+| Sources et méthodologie | Informations sur les réseaux, les unités et les principes de mesure | Les statuts visibles dans certaines pages ne sont pas tous cohérents avec les réponses de l’API ; consulter les limites des sources ci-dessous. |
+| Paramètres | Thème, informations de version et options de mise à jour | Les informations de version affichées dépendent des constantes de l’application et ne certifient pas la version du site de référence. |
 
-### 📱 4. Bouton « Installer l'application » (PWA Native)
-- Permet en un clic d'installer l'application sur l'écran d'accueil d'un mobile (Android/iOS) ou sur le bureau d'un ordinateur (PC, Mac, Linux).
-- Fonctionnement **100% autonome hors connexion** grâce à une base locale IndexedDB stockant plus de 12 000 télémesures et séries temporelles.
-- Guide visuel pas-à-pas dédié pour les utilisateurs d'iPhone / iPad sous Safari.
+### État des sources dans ce dépôt
 
-### 💡 5. Outil Pédagogique « Pourquoi cette valeur ? »
-Pour chaque balise (ex. `112 nSv/h`), l'application décompose les 5 composantes physiques réelles qui expliquent ce niveau et ses variations :
-1. **🌍 Géologie locale :** Rayonnement tellurique du sous-sol (massifs granitiques bretons/auvergnats vs bassins sédimentaires parisiens).
-2. **☁️ Météorologie (Pluie & Radon) :** Phénomène de *washout* provoquant une hausse transitoire de +20% à +80% pendant les averses.
-3. **☢️ Rayonnement naturel :** Bruit de fond nominal moyen métropolitain (50 à 250 nSv/h).
-4. **🌌 Rayonnement cosmique :** Dépendance directe à l'altitude (+15 nSv/h par 1 000 mètres).
-5. **📡 Instrumentation :** Bruit statistique de Poisson (± 5 nSv/h) inhérent aux compteurs physiques.
+Le frontend utilise les routes `/api/v1` du serveur Express défini dans `server.ts`. Le backend Python distinct possède aussi des connecteurs, mais il n’est pas branché automatiquement au frontend. Un connecteur présent dans le code n’est donc pas nécessairement actif.
 
-### 📜 6. Timeline des Événements & Juxtaposition Analytique (2026)
-Arborescence chronologique interactive mois par mois (`Jan`, `Fév`, `Mars`...) juxtaposant systématiquement :
-- **🔵 Mesure Téléray :** Valeurs de fond et pics enregistrés.
-- **🔴 Alertes officielles :** Communiqués ASNR / IRSN, classements sur l'échelle INES (Niveau 0, Niveau 1, Exercices PPI).
-- **⛅ Événements environnementaux :** Épisodes orageux, poussières sahariennes, crues de la Loire, éjections solaires.
+| Source | État vérifié dans le code | Nature et précaution |
+|---|---|---|
+| **Téléray — ASNR** | Le serveur tente de récupérer le catalogue des stations. Le flux public de mesures directes n’est pas disponible par cette intégration. | Les mesures visibles en mode DÉMO sont des données d’essai. Le catalogue ne constitue pas une télémesure. |
+| **OpenRadiation** | Un connecteur de récupération directe est présent ; la disponibilité dépend du service et de sa configuration. | Ne considérer une mesure comme réelle que si sa provenance et son statut de source sont explicitement confirmés. |
+| **Safecast** | Un connecteur existe ; le code contient aussi des points de base et des données locales qui ne prouvent pas une connexion au flux. | Ne pas assimiler les valeurs préchargées à des données Safecast en direct. |
+| **EURDEP** | Connecteur présent dans le backend Python ; aucune intégration de mesures en direct n’est confirmée dans le serveur frontend par défaut. | Les stations ou valeurs locales éventuellement affichées ne sont pas une preuve d’accès au flux européen. |
+| **OPERA-Air** | Pages et structures de données présentes ; le dépôt comporte des valeurs locales préchargées, sans flux direct confirmé dans l’application frontend. | Ne pas présenter ces valeurs comme résultats actuels de laboratoire. |
+| **HydroTéléray** | Pages et structures de données présentes ; le dépôt comporte des valeurs locales préchargées, sans flux direct confirmé dans l’application frontend. | Ne pas présenter ces valeurs comme mesures actuelles de l’eau. |
 
-### ⚖️ 7. Mentions Légales & Avertissement de Non-Responsabilité
-- Onboarding obligatoire à la première visite stipulant expressément que **l'auteur indépendant n'est pas responsable des données fournies** par les réseaux publics d'État ou citoyens.
-- Rappel formel que l'application est un outil citoyen consultatif qui ne remplace pas les alertes d'urgence des préfectures, de la Sécurité Civile ou de l'ASNR.
+Les réponses de statut disponibles à l’exécution sont plus pertinentes que les badges ou descriptions statiques de l’interface, mais elles ne remplacent pas la vérification auprès du producteur. Pour les seuils, mesures et alertes, consulter les publications officielles.
 
-### 🧭 8. Visite Guidée Contextuelle & Infobulles
-- Parcours interactif pas-à-pas en 4 étapes pour les nouveaux utilisateurs.
-- Infobulles d'aide contextuelle (`?`) disséminées sur les grandeurs physiques clés (`nSv/h`, Téléray, $H^*(10)$).
+### Références et attribution des données
 
----
+Le code et la documentation du dépôt mentionnent les producteurs et licences suivants. Ces mentions décrivent les références actuellement inscrites dans le projet ; elles ne constituent pas une vérification juridique des conditions en vigueur. Vérifier les conditions du producteur avant toute redistribution ou réutilisation.
 
-## 🏛️ Sources & Réseaux de Surveillance Répertoriés & Connectés
+| Réseau / ressource | Producteur ou référence | Attribution à conserver |
+|---|---|---|
+| Téléray, HydroTéléray, OPERA-Air | ASNR (anciennement ASN / IRSN) | « Source : ASNR — [nom du réseau] », avec date ou horodatage lorsque disponible. |
+| EURDEP | Commission européenne, Joint Research Centre (JRC) | Mentionner EURDEP/JRC et signaler les transformations, filtres ou agrégations appliqués. |
+| OpenRadiation | Contributeurs OpenRadiation | Citer [OpenRadiation](https://openradiation.org) et vérifier les obligations ODbL documentées par le projet. |
+| Safecast | Réseau Safecast | Citer [Safecast](https://safecast.org) ; la documentation du dépôt indique CC0, à confirmer auprès du producteur. |
+| Fond cartographique | Contributeurs OpenStreetMap | « © [Contributeurs OpenStreetMap](https://www.openstreetmap.org/copyright) ». |
 
-Afin de respecter la plus stricte transparence métrologique, l'application distingue formellement les réseaux transmettant un **flux direct ouvert continu de télémesures** de ceux répertoriés au cadastre ou sous protocole institutionnel :
+Voir [docs/sources.md](docs/sources.md) pour le statut des connecteurs et les réserves associées.
 
-| Réseau | Organisme producteur | Statut réel d'intégration | Nature des données |
-| :--- | :--- | :--- | :--- |
-| **OpenRadiation** | Consortium citoyen (IRSN, Sorbonne, ANCCLI, FabLabs) | **🟢 Connecté en direct** (Flux live temps réel ouvert) | Capteurs mobiles et fixes géolocalisés (débit de dose en nSv/h) |
-| **Safecast** | Réseau citoyen international ouvert | **🟢 Connecté en direct** (API ouverte temps réel) | Capteurs citoyens bGeigie mobiles et fixes |
-| **Téléray** | ASNR / IRSN (Autorité de Sûreté Nucléaire et Radioprotection) | **🔵 Répertoire officiel certifié** (Cadastre des 479 balises ASNR, pas de flux public temps réel sans clé) | 479 balises fixes nationales ($H^*(10)$ en nSv/h) |
-| **HydroTéléray** | ASNR / IRSN | **🟣 Non connecté** (Cadastre et fiches de surveillance fluviale, 0 mesure directe importée) | Bassins fluviaux en aval des CNPE (Tritium en Bq/L) |
-| **OPERA-Air** | ASNR / IRSN | **🟣 Non connecté** (Fiches sentinelles et baseline environnementale, 0 mesure directe importée) | Aérosols atmosphériques sur filtres géants ($\mu\text{Bq/m}^3$) |
-| **EURDEP** | Commission Européenne (DG JRC) | **⚪ Accès restreint** (Protocole d'échange interétatique UE, non connecté en flux direct) | Surveillance transfrontalière européenne continue |
+## Expérience utilisateur et mode hors connexion
 
-> **Règle stricte de traçabilité :** Un connecteur écrit mais qui ne récupère aucune mesure directe ne peut en aucun cas être affiché comme connecté. Seuls OpenRadiation et Safecast fournissent un flux direct de télémesures en direct continu sans clé d'accès restreinte. Téléray est audité et certifié en tant que répertoire officiel d'État (479 balises vérifiées auprès du domaine officiel `teleray.asnr.fr`).
+- L’interface est adaptative et propose un thème sombre et un thème clair.
+- Le manifeste PWA, les icônes et le service worker sont configurés dans le projet. Le service worker est désactivé dans le serveur de développement.
+- Workbox prévoit la mise en cache des ressources statiques, des tuiles OpenStreetMap et de certaines réponses API. Les données consultables hors connexion dépendent de ce qui a déjà été mis en cache sur l’appareil.
+- Dexie stocke des données dans IndexedDB et `ApiService` tente de relire son cache après une erreur réseau. Cela ne garantit ni une première utilisation hors connexion, ni des données fraîches, ni la disponibilité de tous les modules.
 
----
+**Ne pas traiter un cache local, une donnée périmée ou une valeur de démonstration comme une mesure actuelle.**
 
-## 🚀 Démarrage Rapide
+## Architecture technique
 
-### Prérequis
-- Node.js 20+ ou Bun
-- npm ou bun
+Le dépôt comprend deux serveurs distincts :
 
-### Lancement du Frontend & Serveur Intégré
+1. **Application web par défaut** : React, TypeScript et Vite ; `npm run dev` démarre `server.ts`, un serveur Express qui sert Vite en développement et expose les routes frontend `/api/v1`.
+2. **Backend Python séparé** : FastAPI, SQLAlchemy et connecteurs dans `backend/`. Il n’est pas lancé par `npm run dev` et le frontend par défaut n’est pas configuré pour l’utiliser.
+
+Les principaux composants sont React 19, Vite 8, Tailwind CSS 4, Leaflet / React-Leaflet pour les cartes, Recharts pour les graphiques, Dexie / IndexedDB pour le cache local et `vite-plugin-pwa` / Workbox pour les fonctionnalités PWA. La configuration et ses limites sont détaillées dans [docs/architecture.md](docs/architecture.md).
+
+## Installation et lancement
+
+### Application web
+
+Prérequis conseillés : Node.js 22 et npm. Depuis la racine du dépôt :
+
 ```bash
-# Cloner le dépôt
 git clone https://github.com/pnoualhier/Radiator.git
 cd Radiator
-
-# Installer les dépendances
-npm install
-
-# Démarrer le serveur de développement (Port 3000)
+npm install --legacy-peer-deps
 npm run dev
 ```
 
-L'application est immédiatement accessible sur [http://localhost:3000](http://localhost:3000).
+Le serveur de développement écoute sur [http://localhost:3000](http://localhost:3000). Le drapeau `--legacy-peer-deps` est actuellement nécessaire avec npm en raison d’un conflit de versions déclaré entre Vite 8 et esbuild ; l’installation simple `npm install` échoue lors de la résolution des dépendances.
 
-### Compilation pour la Production
+Pour générer les fichiers de production :
+
 ```bash
 npm run build
 ```
 
----
+Le serveur de développement n’active pas le service worker ; il ne permet donc pas de valider à lui seul l’installation PWA ou le comportement complet hors connexion.
 
-## 📄 Licence du Code & Licences Détaillées des Données
+### Backend Python indépendant
 
-### 💻 Code Source de l'Application
-- **Licence :** Licence MIT (libre, ouverte et réutilisable).
-- **Dépôt officiel :** [https://github.com/pnoualhier/Radiator](https://github.com/pnoualhier/Radiator)
+Le backend est facultatif pour lancer le frontend. Pour l’exécuter séparément, depuis le dépôt :
 
-### 📊 Licences des Données et Obligations d'Attribution par Producteur
-Les télémesures agrégées par l'application proviennent de plusieurs producteurs distincts. Afin de respecter rigoureusement le cadre juridique de chaque réseau, **les licences ne sont pas généralisées** : chaque producteur dispose de ses propres conditions de réutilisation et obligations d'attribution documentées ci-dessous :
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
-| Réseau / Flux | Organisme producteur | Licence applicable | Conditions de réutilisation | Obligation d'attribution & Citation requise |
-| :--- | :--- | :--- | :--- | :--- |
-| **Téléray** | ASNR / IRSN (État Français) | **Licence Ouverte v2.0 (Etalab)** | Réutilisation libre (commerciale & non commerciale), reproduction, modification et diffusion autorisées. | **Mention obligatoire :** *« Source : ASNR - Réseau Téléray »* avec horodatage de l'extraction. Ne confère aucun aval officiel de l'ASNR à l'application réutilisatrice. |
-| **HydroTéléray** | ASNR / IRSN (État Français) | **Licence Ouverte v2.0 (Etalab)** | Réutilisation libre (commerciale & non commerciale) pour la surveillance radiologique des eaux fluviales en aval des CNPE. | **Mention obligatoire :** *« Source : ASNR - Réseau HydroTéléray »* avec date du relevé et radionucléide dosé. |
-| **OPERA-Air** | ASNR / IRSN (État Français) | **Licence Ouverte v2.0 (Etalab)** | Réutilisation libre (commerciale & non commerciale) des mesures d'aérosols atmosphériques sur filtres très grand débit. | **Mention obligatoire :** *« Source : ASNR - Réseau OPERA-Air »*. |
-| **EURDEP** | Commission Européenne (DG Joint Research Centre / JRC) | **Décision 2011/833/UE (EU Open Data)** | Réutilisation libre à des fins commerciales ou non commerciales, sous condition de préservation de l'intégrité contextuelle des données. | **Mention obligatoire :** *« Source : Union Européenne, DG JRC - Plateforme EURDEP »*. Obligation d'indiquer si des transformations, agrégations ou filtres ont été appliqués. |
-| **OpenRadiation** | Consortium OpenRadiation (IRSN, Sorbonne Université, ANCCLI, FabLabs) | **ODbL v1.0 (Open Database License)** | Partage, modification et enrichissement autorisés sous condition stricte de partage à l'identique (**Share-Alike**) des bases dérivées. | **Mention obligatoire :** *« Données : Contributeurs OpenRadiation sous licence ODbL »* avec lien actif vers [openradiation.org](https://openradiation.org) et notification des termes de la licence ODbL. |
-| **Safecast** | Safecast Global | **CC0 1.0 Universal (Domaine Public Dédié)** | Données brutes placées dans le domaine public universel (sans restriction ni contrainte de licence dérivée). | **Attribution éthique recommandée :** *« Données issues du réseau citoyen Safecast (projet bGeigie) »* avec mention et lien vers [safecast.org](https://safecast.org). |
-| **Fonds de carte** | Contributeurs OpenStreetMap | **ODbL (Open Database License)** | Cartographie géographique vectorielle et tuiles tuilées libres. | **Mention obligatoire :** *« © Contributeurs OpenStreetMap »* avec lien vers openstreetmap.org/copyright. |
+L’API et sa documentation interactive sont alors accessibles par défaut sur `http://localhost:8000` et `http://localhost:8000/docs`. Les paramètres de connexion aux sources et à la base doivent être configurés séparément. N’utilisez pas de clés réelles dans des captures, des commits ou des fichiers publics.
 
-### ⚠️ Avertissements Légaux & Clause de Non-Affiliation
-- **Indépendance citoyenne :** « Radiation France » est une initiative logicielle indépendante développée à titre bénévole. Elle n'est affiliée, mandatée ni sponsorisée par l'Autorité de Sûreté Nucléaire et de Radioprotection (ASNR), l'IRSN, la Commission Européenne ou les exploitants nucléaires civils ou militaires.
-- **Dégagement de responsabilité :** La mise à disposition des données ouvertes n'engage pas la responsabilité des organismes producteurs quant aux analyses, calculs dérivés, visualisations ou interprétations réalisés au sein de cette interface.
-- **Canaux d'urgence de l'État :** En cas d'incident nucléaire ou radiologique avéré, cette application ne saurait remplacer les dispositifs d'alerte et de consignes officielles des préfectures, de la Sécurité Civile (FR-Alert, sirènes SAIP) ou de l'ASNR.
+## Licence et responsabilité
 
+Le README antérieur annonçait une licence MIT, mais le dépôt ne contient pas de fichier `LICENSE` ni de champ `license` dans `package.json` permettant de confirmer une licence globale. Un fichier source porte une mention SPDX Apache-2.0 : cette mention isolée ne résout pas la licence du dépôt entier. Clarifier ce point avant de réutiliser le code.
+
+L’application est fournie à titre informatif. Les mesures, métadonnées, caches et textes peuvent être incomplets, périmés, indisponibles ou erronés. Elle n’est pas un instrument de décision sanitaire ou de sécurité. En cas d’événement radiologique, suivre les consignes des autorités françaises, de la préfecture et de [FR-Alert](https://www.fr-alert.gouv.fr/), et consulter les informations de l’[ASNR](https://www.asnr.fr/).
+
+## Contribuer
+
+Les contributions et signalements peuvent être soumis via les [issues](https://github.com/pnoualhier/Radiator/issues) et les pull requests du dépôt. Inclure les étapes de reproduction et le contexte technique utile ; ne pas joindre de clés, de données personnelles ou de coordonnées précises.
+
+Pour préparer une future page d’accueil indépendante, consulter le [catalogue des captures](docs/SCREENSHOTS_CATALOG.md) et les ressources visuelles associées.
