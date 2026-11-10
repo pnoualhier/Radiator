@@ -1,10 +1,14 @@
 import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
+import { lazy, Suspense } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ThemeProvider } from './context/ThemeContext';
+import LandingPage from './pages/LandingPage';
 import './index.css';
 
 console.log('[RadioFrance:Init] 🚀 Démarrage du point d\'entrée principal (main.tsx)...');
+
+const App = lazy(() => import('./App.tsx'));
+const isLandingPage = window.location.pathname === '/';
 
 // Global error handlers to display fatal runtime errors directly in the UI instead of a blank white screen
 window.addEventListener('error', (event) => {
@@ -52,9 +56,15 @@ try {
   const root = createRoot(target);
   root.render(
     <ErrorBoundary>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
+      {isLandingPage ? (
+        <LandingPage />
+      ) : (
+        <ThemeProvider>
+          <Suspense fallback={<div className="min-h-screen bg-slate-950" aria-label="Chargement de l’application" />}>
+            <App />
+          </Suspense>
+        </ThemeProvider>
+      )}
     </ErrorBoundary>
   );
   console.log('[RadioFrance:Init] ✅ createRoot.render() exécuté avec succès.');

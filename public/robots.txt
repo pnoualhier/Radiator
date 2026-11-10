@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://radiation-france-surveillance-radiologique.ai.studio/sitemap.xml

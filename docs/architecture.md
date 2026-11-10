@@ -6,7 +6,7 @@ Radiation France (repository: `Radiator`) is composed of a React web application
 
 The web application is built with React 19, TypeScript, Vite 8, and Tailwind CSS 4. Leaflet / React-Leaflet provide map components; Recharts renders charts. `src/` contains the pages, UI components, client-side services, connectors, and bundled data.
 
-`npm run dev` starts `server.ts`. This Express server integrates Vite for development and exposes the frontend's `/api/v1` routes. It contains source connector attempts as well as local fixtures, generated or preloaded values, and some hard-coded health counters. A returned station, measurement, or count is not inherently evidence that a source is connected or that the value is a live observation. Check the relevant route and its source/status metadata before interpreting it.
+`npm run dev` starts `server.ts`. This Express server integrates Vite for development and exposes the frontend's `/api/v1` routes. The public landing page is rendered at `/`; the existing React application is rendered at `/app`, with its selected tab optionally supplied by `?tab=map`, `?tab=sources`, and other existing tab IDs. API paths remain under `/api/v1`. The PWA manifest starts at `/app` so installed users continue to open the application. The server contains source connector attempts as well as local fixtures, generated or preloaded values, and some hard-coded health counters. A returned station, measurement, or count is not inherently evidence that a source is connected or that the value is a live observation. Check the relevant route and its source/status metadata before interpreting it.
 
 ## Separate Python backend
 

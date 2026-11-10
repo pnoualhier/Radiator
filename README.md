@@ -34,6 +34,8 @@
 
 Le projet est indépendant et n’est ni affilié à l’ASNR ou à l’IRSN, ni approuvé par ces organismes. Il ne constitue pas un dispositif officiel de surveillance ou d’alerte et ne remplace pas leurs publications.
 
+La page d’accueil présente le projet ; l’application reste accessible sur `/app` et ses modules peuvent être ouverts directement avec le paramètre `?tab=` (par exemple `/app?tab=map`).
+
 ## Aperçu de l’interface
 
 Les captures ci-dessous ont été réalisées dans le dépôt local, avec le mode **DÉMO** explicitement activé. Les valeurs d’essai ne sont pas des télémesures et ne doivent pas être reprises comme données radiologiques. Voir le [catalogue des captures et les écrans non publiés](docs/SCREENSHOTS_CATALOG.md).
@@ -127,7 +129,7 @@ npm install --legacy-peer-deps
 npm run dev
 ```
 
-Le serveur de développement écoute sur [http://localhost:3000](http://localhost:3000). Le drapeau `--legacy-peer-deps` est actuellement nécessaire avec npm en raison d’un conflit de versions déclaré entre Vite 8 et esbuild ; l’installation simple `npm install` échoue lors de la résolution des dépendances.
+Le serveur de développement écoute sur [http://localhost:3000](http://localhost:3000) ; la page de présentation s’affiche à la racine et l’application à [http://localhost:3000/app](http://localhost:3000/app). Le drapeau `--legacy-peer-deps` est actuellement nécessaire avec npm en raison d’un conflit de versions déclaré entre Vite 8 et esbuild ; l’installation simple `npm install` échoue lors de la résolution des dépendances.
 
 Pour générer les fichiers de production :
 

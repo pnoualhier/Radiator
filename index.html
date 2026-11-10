@@ -2,13 +2,22 @@
 <html lang="fr" style="background-color: #020617; color: #f8fafc;">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Radiation France — Surveillance Radiologique</title>
-    <meta name="description" content="PWA de surveillance de la radioactivité environnementale en France métropolitaine et Corse (données Téléray/ASNR-IRSN, EURDEP, OpenRadiation, Safecast)." />
-    <meta property="og:title" content="Radiation France — Surveillance Radiologique" />
-    <meta property="og:description" content="PWA de surveillance de la radioactivité environnementale en France métropolitaine et Corse (données Téléray/ASNR-IRSN, EURDEP, OpenRadiation, Safecast)." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radiation France — Surveillance radiologique et données environnementales</title>
+    <meta name="description" content="Explorez une interface indépendante de visualisation des réseaux et des données de surveillance radiologique, avec leurs sources et leurs limites." />
+    <meta property="og:title" content="Radiation France — Surveillance radiologique" />
+    <meta property="og:description" content="Explorez une interface indépendante de visualisation des réseaux et des données de surveillance radiologique, avec leurs sources et leurs limites." />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Radiation France" />
+    <meta property="og:image" content="https://radiation-france-surveillance-radiologique.ai.studio/og-radiation-france.jpg" />
+    <meta property="og:image:alt" content="Capture du tableau de bord Radiation France en mode démonstration ; les valeurs sont des données d’essai." />
+    <meta property="og:url" content="https://radiation-france-surveillance-radiologique.ai.studio/" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Radiation France — Surveillance radiologique" />
+    <meta name="twitter:description" content="Explorez les réseaux de surveillance radiologique et les limites des données disponibles." />
+    <meta name="twitter:image" content="https://radiation-france-surveillance-radiologique.ai.studio/og-radiation-france.jpg" />
+    <link rel="canonical" href="https://radiation-france-surveillance-radiologique.ai.studio/" />
     <meta name="theme-color" content="#0f172a" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -16,11 +25,9 @@
     <meta name="apple-mobile-web-app-title" content="RadiationFR" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script>
+    <script type="module">
       // Automatically unregister stale or broken Service Workers in preview to prevent white screens caused by outdated asset hashes
-      if ('serviceWorker' in navigator) {
+      if (import.meta.env.DEV && 'serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
           for (var r of regs) { r.unregister(); }
         });

@@ -33,9 +33,24 @@ import { CompareStationsPage } from './pages/CompareStationsPage';
 import { TimelinePage } from './pages/TimelinePage';
 import type { GeoZone } from './utils/geoSearch';
 import { useFavorites } from './hooks/useFavorites';
+import 'leaflet/dist/leaflet.css';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<NavTab>('home');
+  useEffect(() => {
+    document.title = 'Radiation France — Application de surveillance radiologique';
+    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    description?.setAttribute('content', 'Accédez aux modules de l’application Radiation France. La disponibilité et la fraîcheur des données dépendent des sources.');
+    document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+      ?.setAttribute('href', `${window.location.origin}/app`);
+    document.querySelector<HTMLMetaElement>('meta[property="og:url"]')
+      ?.setAttribute('content', `${window.location.origin}/app`);
+  }, []);
+
+  const [currentTab, setCurrentTab] = useState<NavTab>(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get('tab');
+    const validTabs: NavTab[] = ['home', 'map', 'stations', 'compare', 'timeline', 'health', 'types', 'alerts', 'sources', 'info'];
+    return validTabs.find(tab => tab === requestedTab) ?? 'home';
+  });
   const [selectedStationId, setSelectedStationId] = useState<number | null>(null);
   const [compareStationIds, setCompareStationIds] = useState<number[]>([1, 7, 8, 11]);
   const [activeMapZone, setActiveMapZone] = useState<GeoZone | null>(null);
@@ -166,20 +181,21 @@ export default function App() {
   const handleTabChange = (tab: NavTab) => {
     setSelectedStationId(null);
     setCurrentTab(tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    window.history.replaceState(null, '', url);
   };
 
   const handleOpenCompare = (stationId?: number) => {
     if (stationId && !compareStationIds.includes(stationId)) {
       setCompareStationIds(prev => [stationId, ...prev.slice(0, 3)]);
     }
-    setSelectedStationId(null);
-    setCurrentTab('compare');
+    handleTabChange('compare');
   };
 
   const handleMeasureZone = (zone: GeoZone) => {
     setActiveMapZone(zone);
-    setSelectedStationId(null);
-    setCurrentTab('map');
+    handleTabChange('map');
     setIsSearchOpen(false);
   };
 
@@ -401,7 +417,7 @@ export default function App() {
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
         onNavigateToTab={(tab) => {
-          setCurrentTab(tab as any);
+          handleTabChange(tab as NavTab);
           setIsOfflineCenterOpen(false);
         }}
       />
